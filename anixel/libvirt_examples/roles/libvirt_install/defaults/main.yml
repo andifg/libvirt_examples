@@ -1,0 +1,9 @@
+# SPDX-License-Identifier: MIT-0
+---
+# Install phase only; NAT and guests are composed in playbooks (libvirt_network, libvirt_vm).
+# Align these paths with libvirt_vm when both roles run on the same host.
+
+libvirt_install_images_dir: /var/lib/libvirt/images
+libvirt_install_image_cache_dir: /var/lib/libvirt/image-cache
+
+libvirt_install_cockpit_user: cockpit

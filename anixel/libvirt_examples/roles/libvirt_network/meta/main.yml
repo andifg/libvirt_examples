@@ -1,0 +1,11 @@
+# SPDX-License-Identifier: MIT-0
+galaxy_info:
+  author: your name
+  description: Define, start, and autostart a libvirt network (NAT or isolated) from templates/network.xml.j2.
+  license: GPL-2.0-or-later
+  min_ansible_version: "2.14"
+  galaxy_tags:
+    - libvirt
+    - kvm
+    - networking
+dependencies: []

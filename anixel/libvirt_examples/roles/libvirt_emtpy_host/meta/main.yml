@@ -1,0 +1,10 @@
+# SPDX-License-Identifier: MIT-0
+galaxy_info:
+  author: your name
+  description: Undefine all libvirt domains and all libvirt networks on a host.
+  license: GPL-2.0-or-later
+  min_ansible_version: "2.14"
+  galaxy_tags:
+    - libvirt
+    - kvm
+dependencies: []

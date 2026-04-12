@@ -1,0 +1,24 @@
+# SPDX-License-Identifier: MIT-0
+---
+- name: Require Red Hat family OS
+  ansible.builtin.assert:
+    that:
+      - ansible_os_family == "RedHat"
+    fail_msg: >-
+      This role targets Red Hat family systems only (ansible_os_family: {{ ansible_os_family }}).
+
+- name: Define libvirt network | libvirt_network
+  community.libvirt.virt_net:
+    command: define
+    name: "{{ libvirt_network_name }}"
+    xml: "{{ lookup('ansible.builtin.template', 'network.xml.j2') }}"
+
+- name: Start libvirt network | libvirt_network
+  community.libvirt.virt_net:
+    command: start
+    name: "{{ libvirt_network_name }}"
+
+- name: Enable autostart for libvirt network | libvirt_network
+  community.libvirt.virt_net:
+    autostart: true
+    name: "{{ libvirt_network_name }}"

@@ -1,0 +1,51 @@
+# SPDX-License-Identifier: MIT-0
+# Undefine every defined domain on this host (list_vms); ignores libvirt_machines inventory.
+# Domain-attached storage is removed via libvirt (delete_volumes); image-cache trees are untouched.
+# Then removes every libvirt network reported by list_nets (active + defined).
+---
+- name: Require Red Hat family OS
+  ansible.builtin.assert:
+    that:
+      - ansible_os_family == "RedHat"
+    fail_msg: >-
+      This role targets Red Hat family systems only (ansible_os_family: {{ ansible_os_family }}).
+
+- name: List defined libvirt domains | libvirt_emtpy_host
+  community.libvirt.virt:
+    command: list_vms
+  register: libvirt_emtpy_host_domain_list
+
+- name: Force-off libvirt domain | libvirt_emtpy_host
+  community.libvirt.virt:
+    name: "{{ item }}"
+    state: destroyed
+  loop: "{{ libvirt_emtpy_host_domain_list.list_vms | default([]) }}"
+  loop_control:
+    label: "{{ item }}"
+
+- name: Undefine libvirt domain and delete attached volume files | libvirt_emtpy_host
+  community.libvirt.virt:
+    command: undefine
+    name: "{{ item }}"
+    flags:
+      - managed_save
+      - snapshots_metadata
+      - nvram
+      - checkpoints_metadata
+      - delete_volumes
+  loop: "{{ libvirt_emtpy_host_domain_list.list_vms | default([]) }}"
+  loop_control:
+    label: "{{ item }}"
+
+- name: List libvirt networks | libvirt_emtpy_host
+  community.libvirt.virt_net:
+    command: list_nets
+  register: libvirt_emtpy_host_network_list
+
+- name: Remove libvirt network | libvirt_emtpy_host
+  community.libvirt.virt_net:
+    state: absent
+    name: "{{ item }}"
+  loop: "{{ libvirt_emtpy_host_network_list.list_nets | default([]) }}"
+  loop_control:
+    label: "{{ item }}"

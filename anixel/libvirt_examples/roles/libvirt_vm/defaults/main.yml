@@ -1,0 +1,26 @@
+# SPDX-License-Identifier: MIT-0
+---
+# Required when using this role: libvirt_vm_name, libvirt_vm_url, libvirt_vm_os_name
+# Optional: libvirt_vm_memory, libvirt_vm_vcpus, libvirt_vm_graphics_type, libvirt_vm_autostart,
+#           libvirt_vm_networks (multi-NIC), libvirt_vm_network, libvirt_vm_nat_network_name,
+#           libvirt_vm_cloud_init_user_data, libvirt_vm_cloud_init_disable
+
+libvirt_vm_image_cache_dir: /var/lib/libvirt/image-cache
+libvirt_vm_images_dir: /var/lib/libvirt/images
+libvirt_vm_qcow2_download_timeout: 3600
+
+# Default libvirt network name when libvirt_vm_network is unset (align with libvirt_network / inventory).
+libvirt_vm_nat_network_name: openshift
+
+libvirt_vm_memory: 2048
+libvirt_vm_vcpus: 2
+libvirt_vm_graphics_type: none
+libvirt_vm_autostart: true
+libvirt_vm_cloud_init_disable: true
+
+libvirt_vm_cloud_init_default: |
+  #cloud-config
+  user: test
+  password: 'hello1234'
+  ssh_pwauth: True
+  chpasswd: { expire: False }

@@ -1,0 +1,4 @@
+# Connection: export LIBVIRT_* (see .envrc; use direnv or `source .envrc`).
+all:
+  hosts:
+    server-01:

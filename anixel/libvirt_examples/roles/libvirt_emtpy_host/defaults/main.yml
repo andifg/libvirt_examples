@@ -1,0 +1,3 @@
+# SPDX-License-Identifier: MIT-0
+---
+# No defaults; networks to remove are discovered via virt_net command=list_nets.

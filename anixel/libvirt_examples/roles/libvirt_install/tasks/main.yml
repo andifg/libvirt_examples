@@ -1,0 +1,61 @@
+# SPDX-License-Identifier: MIT-0
+---
+- name: Require Red Hat family OS
+  ansible.builtin.assert:
+    that:
+      - ansible_os_family == "RedHat"
+    fail_msg: >-
+      This role targets Red Hat family systems only (ansible_os_family: {{ ansible_os_family }}).
+
+- name: Install libvirt stack (packages, cockpit, libvirtd) | libvirt_install:main
+  block:
+    - name: Refresh DNF metadata
+      ansible.builtin.dnf:
+        update_cache: true
+
+    - name: Install libvirt packages
+      ansible.builtin.package:
+        name:
+          - qemu-kvm
+          - libvirt
+          - libvirt-client
+          - virt-install
+          - bzip2
+        state: present
+
+    - name: Install cockpit packages
+      ansible.builtin.package:
+        name:
+          - cockpit
+          - cockpit-machines
+        state: present
+
+    - name: Ensure libvirtd service is started
+      ansible.builtin.systemd_service:
+        name: libvirtd
+        state: started
+        enabled: true
+
+    - name: Ensure cockpit user exists
+      ansible.builtin.user:
+        name: "{{ libvirt_install_cockpit_user }}"
+        password: "{{ libvirt_install_cockpit_password }}"
+        shell: /bin/bash
+        create_home: true
+        groups: wheel
+        append: true
+
+    - name: Ensure cockpit service is started
+      ansible.builtin.systemd_service:
+        name: cockpit
+        state: started
+        enabled: true
+
+    - name: Ensure libvirt image directories exist | libvirt_install:main
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: directory
+        mode: "0755"
+      loop:
+        - "{{ libvirt_install_images_dir }}"
+        - "{{ libvirt_install_image_cache_dir }}"

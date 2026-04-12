@@ -1,0 +1,163 @@
+# SPDX-License-Identifier: MIT-0
+---
+# Single play: libvirt stack → WAN (NAT) + LAN (isolated) + mgmt (/30 NAT) → Opnsense + CentOS VMs (mgmt, HAProxy).
+#
+# WAN (NAT): only the firewall should use this network so it alone reaches the host / outside.
+# LAN (isolated): no host IP on the bridge — Opnsense and other VMs share L2; reachability is
+# via Opnsense (attach future guests to lan_net only).
+# Mgmt (/30 NAT): backdoor segment; libvirt host is .1, DHCP assigns .2. The CentOS mgmt VM also
+# uses lan_net so it shares L2 with Opnsense LAN (second NIC is mgmt_net).
+#
+# libvirt_install_cockpit_password: required for libvirt_install (group_vars / host_vars / -e).
+# WAN NAT and gateway IP live in `virsh net-dumpxml <wan_net>`, not in `virsh dumpxml` for the VM.
+# If WAN was defined without NAT earlier: `virsh net-destroy <wan_net>`, `virsh net-undefine <wan_net>`, re-run this playbook.
+
+
+# ssh -L 8118:192.168.1.1:443 -J root@88.99.99.79 test@192.168.254.2
+# normal chrome -> https://localhost:8118 -> will be forwarded to 192.168.1.1:443
+
+- name: Opnsense hypervisor
+  hosts: all
+  become: true
+  vars:
+    wan_net: opnsense-wan
+    lan_net: opnsense-lan
+    mgmt_net: opnsense-mgmt
+    vm_cache: /var/lib/libvirt/image-cache
+    vm_images: /var/lib/libvirt/images
+  tasks:
+    - name: Packages, cockpit, and libvirtd
+      ansible.builtin.include_role:
+        name: libvirt_install
+      vars:
+        libvirt_install_image_cache_dir: "{{ vm_cache }}"
+        libvirt_install_images_dir: "{{ vm_images }}"
+
+
+
+    - name: Define Opnsense WAN (NAT)
+      ansible.builtin.include_role:
+        name: libvirt_network
+      vars:
+        libvirt_network_type: "nat"
+        libvirt_network_name: "{{ wan_net }}"
+        libvirt_network_bridge: oswan0
+        libvirt_network_forward_mode: "nat"
+        libvirt_network_ip_address: 192.168.150.1
+        libvirt_network_ip_netmask: 255.255.255.0
+        libvirt_network_dhcp_enabled: true
+        libvirt_network_dhcp_range_start: 192.168.150.2
+        libvirt_network_dhcp_range_end: 192.168.150.254
+        libvirt_network_ipv6_enabled: false
+        libvirt_network_ipv6_address: 2001:db8:ca2:2::1
+        libvirt_network_ipv6_prefix: "64"
+
+    - name: Define Opnsense LAN (isolated; no host IP)
+      ansible.builtin.include_role:
+        name: libvirt_network
+      vars:
+        libvirt_network_type: "isolated"
+        libvirt_network_name: "{{ lan_net }}"
+        libvirt_network_bridge: oslan0
+
+    - name: Define management backdoor (/30 NAT)
+      ansible.builtin.include_role:
+        name: libvirt_network
+      vars:
+        libvirt_network_type: "nat"
+        libvirt_network_name: "{{ mgmt_net }}"
+        libvirt_network_bridge: omgmt0
+        libvirt_network_forward_mode: "nat"
+        libvirt_network_ip_address: 192.168.254.1
+        libvirt_network_ip_netmask: 255.255.255.252
+        libvirt_network_dhcp_enabled: true
+        libvirt_network_dhcp_range_start: 192.168.254.2
+        libvirt_network_dhcp_range_end: 192.168.254.2
+        libvirt_network_ipv6_enabled: false
+        libvirt_network_ipv6_address: 2001:db8:ca2:3::1
+        libvirt_network_ipv6_prefix: "64"
+
+    - name: Provision Opnsense VM
+      ansible.builtin.include_role:
+        name: libvirt_vm
+      vars:
+        libvirt_vm_image_cache_dir: "{{ vm_cache }}"
+        libvirt_vm_images_dir: "{{ vm_images }}"
+        libvirt_vm_qcow2_download_timeout: 3600
+        libvirt_vm_name: opnsense-vm
+        libvirt_vm_url: https://opnsense.c0urier.net/releases/26.1/OPNsense-26.1-nano-amd64.img.bz2
+        libvirt_vm_os_name: freebsd14.2
+        # NIC order: LAN then WAN (adjust if your OPNsense image expects the opposite).
+        libvirt_vm_networks:
+          - network: "{{ lan_net }}"
+          - network: "{{ wan_net }}"
+
+    - name: Provision CentOS Stream management VM
+      ansible.builtin.include_role:
+        name: libvirt_vm
+      vars:
+        libvirt_vm_image_cache_dir: "{{ vm_cache }}"
+        libvirt_vm_images_dir: "{{ vm_images }}"
+        libvirt_vm_qcow2_download_timeout: 3600
+        libvirt_vm_name: centos-mgmt-vm
+        libvirt_vm_url: https://cloud.centos.org/centos/10-stream/x86_64/images/CentOS-Stream-GenericCloud-x86_64-10-latest.x86_64.qcow2
+        libvirt_vm_os_name: centos-stream10
+        libvirt_vm_networks:
+          - network: "{{ lan_net }}"
+          - network: "{{ mgmt_net }}"
+        libvirt_vm_cloud_init_disable: false
+
+    - name: Provision CentOS Stream HAProxy VM
+      ansible.builtin.include_role:
+        name: libvirt_vm
+      vars:
+        libvirt_vm_image_cache_dir: "{{ vm_cache }}"
+        libvirt_vm_images_dir: "{{ vm_images }}"
+        libvirt_vm_qcow2_download_timeout: 3600
+        libvirt_vm_name: centos-haproxy-vm
+        libvirt_vm_url: https://cloud.centos.org/centos/10-stream/x86_64/images/CentOS-Stream-GenericCloud-x86_64-10-latest.x86_64.qcow2
+        libvirt_vm_os_name: centos-stream10
+        libvirt_vm_nat_network_name: "{{ lan_net }}"
+        libvirt_vm_cloud_init_disable: false
+        libvirt_vm_cloud_init_user_data: |
+          #cloud-config
+          users:
+            - default
+            - name: test
+              plain_text_passwd: hello1234
+              lock_passwd: false
+              groups: wheel
+              sudo: ALL=(ALL) NOPASSWD:ALL
+          ssh_pwauth: true
+          package_update: true
+          packages:
+            - haproxy
+          write_files:
+            - path: /etc/haproxy/haproxy.cfg
+              permissions: "0644"
+              content: |
+                global
+                    log /dev/log    local0
+                    chroot /var/lib/haproxy
+                    stats socket /run/haproxy/admin.sock mode 660 level admin
+                    stats timeout 30s
+                    user haproxy
+                    group haproxy
+                    daemon
+                    maxconn 4096
+
+                defaults
+                    mode http
+                    log global
+                    option httplog
+                    timeout connect 10s
+                    timeout client 30s
+                    timeout server 30s
+
+                listen stats
+                    bind *:8404
+                    stats enable
+                    stats uri /
+                    stats refresh 10s
+          runcmd:
+            - [systemctl, enable, "--now", haproxy]
