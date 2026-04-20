@@ -1,34 +1,57 @@
 # libvirt_vm
 
-Provisions **one** libvirt guest: download → optional bz2/raw handling → copy disk → `virt_install` with cloud-init.
+Provisions **one** libvirt guest using flat **`libvirt_vm_*`** variables. **`tasks/main.yml`** checks Red Hat family and **`libvirt_vm_disk_type`**, then includes **`tasks/disk_type_block.yml`** (**`qcow2`** / **`raw`** / **`img`**) or **`tasks/disk_type_iso_install.yml`** (**`iso`**).
 
-## Variables
+## Requirements
 
-All settings exposed by this role use the **`libvirt_vm_`** prefix.
+- Target host: Red Hat family (**`ansible_os_family == "RedHat"`**).
+- Collections: **`community.libvirt`**, **`ansible.builtin`**.
+- Hypervisor: **`virt-install`** (required by the module), **`qemu-img`**, and space under **`libvirt_vm_image_cache_dir`**, **`libvirt_vm_images_dir`** (import), and **`libvirt_vm_disk_dir`** (ISO install).
 
-### Guest (required / optional)
+## Disk modes (`libvirt_vm_disk_type`)
+
+| Value | Meaning |
+|-------|---------|
+| **`qcow2`** or **`raw`** | **Import**: **`get_url`** → cache → optional **bunzip2** → optional **raw/img → qcow2** (when URL yields **`.raw`/`.img`**) → copy to **`{{ libvirt_vm_images_dir }}/vm-{{ libvirt_vm_name }}.qcow2`**, then **`virt_install`** (**`import: true`**, **`qcow2`**). |
+| **`img`** | Same **`disk_type_block.yml`** pipeline as **`qcow2`**, but **`img`** forces conversion to **`qcow2`** whenever the cached artifact is not already **`.qcow2`** (use for OPNsense **nano** **`.img`** / **`.img.bz2`**). |
+| **`iso`** | **Install from ISO**: fetch installer ISO to **`libvirt_vm_iso_installer_path`**, then **`virt_install`** (**`libvirt_vm_iso_install_disk_size_gib`**, **`libvirt_vm_iso_install_extra_args`**, **`libvirt_vm_iso_install_console`** — see **`defaults/main.yml`** and **`disk_type_iso_install.yml`**). |
+
+## Variables (summary)
 
 | Variable | Required | Default / notes |
 |----------|----------|-----------------|
-| `libvirt_vm_name` | yes | Libvirt domain name; disk `vm-{{ libvirt_vm_name }}.qcow2` |
-| `libvirt_vm_url` | yes | Image URL |
-| `libvirt_vm_os_name` | yes | `virt_install` osinfo name |
-| `libvirt_vm_memory` | no | `2048` |
-| `libvirt_vm_vcpus` | no | `2` |
-| `libvirt_vm_graphics_type` | no | `none` |
-| `libvirt_vm_autostart` | no | `true` |
-| `libvirt_vm_networks` | no | If set (non-empty list of `{ network: <libvirt net name> }`), used as **`virt_install`** NICs; see **`playbooks/opnsense_setup.yml`** (WAN + LAN). |
-| `libvirt_vm_network` | no | Single NIC when **`libvirt_vm_networks`** is unset; falls back to **`libvirt_vm_nat_network_name`** |
-| `libvirt_vm_nat_network_name` | no | `openshift` — default libvirt network for the single-NIC path |
-| `libvirt_vm_cloud_init_user_data` | no | `libvirt_vm_cloud_init_default` |
-| `libvirt_vm_cloud_init_disable` | no | `true` |
+| **`libvirt_vm_name`** | yes | Libvirt domain name |
+| **`libvirt_vm_os_name`** | yes | **`virt_install`** **`osinfo`** name |
+| **`libvirt_vm_disk_type`** | no | **`qcow2`**, **`raw`**, **`img`**, or **`iso`** |
+| **`libvirt_vm_download_url`** | yes (per pipeline file) | Image or installer ISO URL (**`get_url`**) |
+| **`libvirt_vm_image_cache_dir`** | no | **`/var/lib/libvirt/image-cache`** — download and staging cache (import + ISO) |
+| **`libvirt_vm_images_dir`** | no | **`/var/lib/libvirt/images`** — import disk is **`vm-{{ libvirt_vm_name }}.qcow2`** here |
+| **`libvirt_vm_disk_dir`** | no | **`{{ libvirt_vm_images_dir }}/vm-{{ libvirt_vm_name }}`** — used for **ISO** install artifacts only |
+| **`libvirt_vm_iso_filename`**, **`libvirt_vm_iso_installer_path`** | no | ISO install: installer basename and full path (default **`{{ libvirt_vm_disk_dir }}/{{ libvirt_vm_iso_filename }}`**) |
+| **`libvirt_vm_iso_install_disk_size_gib`** | no | **ISO** install: new disk size in GiB (**virt_install** **`disks`**); default **20**. |
+| **`libvirt_vm_iso_install_extra_args`** | no | **`virt_install`** **`extra_args`** for **ISO** installs (default Anaconda text-on-serial). |
+| **`libvirt_vm_iso_install_console`** | no | **`virt_install`** **`console`** dict for **ISO** installs (default PTY + **`target_type: serial`**). |
+| **`libvirt_vm_memory`**, **`libvirt_vm_vcpus`**, **`libvirt_vm_graphics_type`**, **`libvirt_vm_autostart`** | no | See **`defaults/main.yml`** (**ISO** install uses **`libvirt_vm_memory`** / **`libvirt_vm_vcpus`**) |
+| **`libvirt_vm_serial_console_enabled`** | no | **Import** only: if **`true`** (default), **`virt_install`** adds **`--serial pty`**. |
+| **`libvirt_vm_networks`** | yes | Non-empty list of **`{ network: <libvirt net name> }`** for **`virt_install`** |
+| **`libvirt_vm_cloud_init_enabled`**, **`libvirt_vm_cloud_init_user_data`**, **`libvirt_vm_cloud_init_disable`** | no | OPNsense and similar guests usually set **`libvirt_vm_cloud_init_enabled: false`**. |
 
-### Paths and timeouts
+Paths **`libvirt_vm_image_cache_dir`** and **`libvirt_vm_images_dir`** align with **`libvirt_install`** when both roles target the same host.
 
-| Variable | Default |
-|----------|---------|
-| `libvirt_vm_image_cache_dir` | `/var/lib/libvirt/image-cache` |
-| `libvirt_vm_images_dir` | `/var/lib/libvirt/images` |
-| `libvirt_vm_qcow2_download_timeout` | `3600` |
+## Example
 
-Playbooks set **`libvirt_vm_*`** on the play (see **`playbooks/opnsense_setup.yml`**) or loop **`include_role: libvirt_vm`** over a dict if you define several guests.
+```yaml
+- ansible.builtin.include_role:
+    name: libvirt_vm
+  vars:
+    libvirt_vm_name: my-guest
+    libvirt_vm_os_name: centos-stream10
+    libvirt_vm_disk_type: qcow2
+    libvirt_vm_download_url: https://example.com/image.qcow2
+    libvirt_vm_networks:
+      - network: my-lan
+```
+
+## Plugins
+
+The collection ships **`libvirt_vm_disk_option_string`** (see **`plugins/filter/libvirt_vm.py`**) for custom **`virt-install`** scripting if needed.

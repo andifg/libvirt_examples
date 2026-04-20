@@ -1,5 +1,6 @@
 # SPDX-License-Identifier: MIT-0
 ---
+
 - name: Require Red Hat family OS
   ansible.builtin.assert:
     that:
@@ -7,79 +8,19 @@
     fail_msg: >-
       This role targets Red Hat family systems only (ansible_os_family: {{ ansible_os_family }}).
 
-- name: Require libvirt_vm_name, libvirt_vm_url, and libvirt_vm_os_name
+- name: Require libvirt_vm_disk_type
   ansible.builtin.assert:
     that:
-      - libvirt_vm_name is defined
-      - libvirt_vm_name | length > 0
-      - libvirt_vm_url is defined
-      - libvirt_vm_url | length > 0
-      - libvirt_vm_os_name is defined
-      - libvirt_vm_os_name | length > 0
+      - libvirt_vm_disk_type is defined
+      - libvirt_vm_disk_type | string | length > 0
+      - libvirt_vm_disk_type in ['qcow2', 'raw', 'img', 'iso']
     fail_msg: >-
-      Set libvirt_vm_name, libvirt_vm_url, and libvirt_vm_os_name for this guest.
+      Set libvirt_vm_disk_type to qcow2, raw, img, or iso.
 
-- name: Download qcow2 images to cache | libvirt_vm
-  ansible.builtin.get_url:
-    url: "{{ libvirt_vm_url }}"
-    dest: "{{ libvirt_vm_image_cache_dir }}/{{ libvirt_vm_url | basename }}"
-    mode: "0644"
-    timeout: "{{ libvirt_vm_qcow2_download_timeout }}"
-    force: false
+- name: Import disk pipeline qcow2, raw, or img | libvirt_vm
+  when: libvirt_vm_disk_type in ['qcow2', 'raw', 'img']
+  ansible.builtin.include_tasks: disk_type_block.yml
 
-- name: Decompress bz2 image in cache | libvirt_vm
-  ansible.builtin.command:
-    argv:
-      - bunzip2
-      - -f
-      - -k
-      - "{{ libvirt_vm_image_cache_dir }}/{{ libvirt_vm_dl_basename }}"
-    creates: "{{ libvirt_vm_image_cache_dir }}/{{ libvirt_vm_dl_basename | regex_replace('(?i)\\.bz2$', '') }}"
-  vars:
-    libvirt_vm_dl_basename: "{{ libvirt_vm_url | basename }}"
-  when: libvirt_vm_dl_basename | regex_search('\\.bz2$', ignorecase=True)
-
-- name: Convert cached raw image to qcow2 | libvirt_vm
-  ansible.builtin.command:
-    argv:
-      - qemu-img
-      - convert
-      - -f
-      - raw
-      - -O
-      - qcow2
-      - "{{ libvirt_vm_image_cache_dir }}/{{ libvirt_vm_cache_basename }}"
-      - "{{ libvirt_vm_image_cache_dir }}/{{ libvirt_vm_converted_qcow2_basename }}"
-    creates: "{{ libvirt_vm_image_cache_dir }}/{{ libvirt_vm_converted_qcow2_basename }}"
-  vars:
-    libvirt_vm_cache_basename: "{{ libvirt_vm_url | basename | regex_replace('(?i)\\.bz2$', '') }}"
-    libvirt_vm_converted_qcow2_basename: "{{ libvirt_vm_cache_basename | regex_replace('(?i)\\.raw$', '.qcow2') }}"
-  when: libvirt_vm_cache_basename | regex_search('\\.raw$', ignorecase=True)
-
-- name: Copy cached qcow2 to per-VM disk path | libvirt_vm
-  ansible.builtin.copy:
-    src: "{{ libvirt_vm_image_cache_dir }}/{{ libvirt_vm_url | basename | regex_replace('(?i)\\.bz2$', '') | regex_replace('(?i)\\.raw$', '.qcow2') }}"
-    dest: "{{ libvirt_vm_images_dir }}/vm-{{ libvirt_vm_name }}.qcow2"
-    remote_src: true
-    mode: "0644"
-    force: false
-
-# Per-guest sizing defaults match common playbook overrides
-- name: Create libvirt machine from qcow2 with cloud-init | libvirt_vm
-  community.libvirt.virt_install:
-    name: "{{ libvirt_vm_name }}"
-    memory: "{{ libvirt_vm_memory }}"
-    vcpus: "{{ libvirt_vm_vcpus }}"
-    import: true
-    disks:
-      - path: "{{ libvirt_vm_images_dir }}/vm-{{ libvirt_vm_name }}.qcow2"
-        format: qcow2
-    osinfo:
-      name: "{{ libvirt_vm_os_name }}"
-    graphics:
-      type: "{{ libvirt_vm_graphics_type }}"
-    autostart: "{{ libvirt_vm_autostart }}"
-    networks: "{{ libvirt_vm_networks if (libvirt_vm_networks is defined and libvirt_vm_networks | length > 0) else [{'network': libvirt_vm_network | default(libvirt_vm_nat_network_name)}] }}"
-    cloud_init:
-      user_data: "{{ libvirt_vm_cloud_init_user_data | default(libvirt_vm_cloud_init_default) }}"
-      disable: "{{ libvirt_vm_cloud_init_disable }}"
+- name: ISO install disk pipeline | libvirt_vm
+  when: libvirt_vm_disk_type == 'iso'
+  ansible.builtin.include_tasks: disk_type_iso_install.yml

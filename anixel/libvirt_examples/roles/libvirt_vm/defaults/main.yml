@@ -1,22 +1,39 @@
 # SPDX-License-Identifier: MIT-0
 ---
-# Required when using this role: libvirt_vm_name, libvirt_vm_url, libvirt_vm_os_name
-# Optional: libvirt_vm_memory, libvirt_vm_vcpus, libvirt_vm_graphics_type, libvirt_vm_autostart,
-#           libvirt_vm_networks (multi-NIC), libvirt_vm_network, libvirt_vm_nat_network_name,
-#           libvirt_vm_cloud_init_user_data, libvirt_vm_cloud_init_disable
+# Required: libvirt_vm_name, libvirt_vm_os_name, libvirt_vm_disk_type (qcow2 | raw | img | iso),
+#           and a non-empty libvirt_vm_download_url (OS image or installer ISO per disk_type).
+# Optional: libvirt_vm_memory, libvirt_vm_vcpus, libvirt_vm_graphics_type, libvirt_vm_serial_console_enabled,
+#           libvirt_vm_iso_install_disk_size_gib, libvirt_vm_iso_install_extra_args, libvirt_vm_iso_install_console,
+#           libvirt_vm_autostart,
+#           libvirt_vm_networks (non-empty list of { network: <libvirt net name> }),
+#           libvirt_vm_cloud_init_enabled, libvirt_vm_cloud_init_user_data, libvirt_vm_cloud_init_disable,
+#           libvirt_vm_disk_dir (iso mode), libvirt_vm_image_cache_dir, libvirt_vm_images_dir.
+
+libvirt_vm_disk_type: qcow2
+# Fetched artifact: OS image URL (qcow2 | raw | img); installer ISO URL when disk_type is iso. Use img for raw disk images (e.g. OPNsense nano .img/.img.bz2).
+libvirt_vm_download_url: ""
 
 libvirt_vm_image_cache_dir: /var/lib/libvirt/image-cache
+
 libvirt_vm_images_dir: /var/lib/libvirt/images
+libvirt_vm_disk_dir: "{{ libvirt_vm_images_dir }}/vm-{{ libvirt_vm_name }}"
 libvirt_vm_qcow2_download_timeout: 3600
 
-# Default libvirt network name when libvirt_vm_network is unset (align with libvirt_network / inventory).
-libvirt_vm_nat_network_name: openshift
+libvirt_vm_networks: []
 
 libvirt_vm_memory: 2048
 libvirt_vm_vcpus: 2
 libvirt_vm_graphics_type: none
+# Import: virt-install --serial pty when true (ISO install: console fixed in disk_type_iso_install.yml; extra_args from libvirt_vm_iso_install_extra_args).
+libvirt_vm_serial_console_enabled: true
 libvirt_vm_autostart: true
+libvirt_vm_cloud_init_enabled: true
 libvirt_vm_cloud_init_disable: true
+
+libvirt_vm_iso_filename: "install.iso"
+libvirt_vm_iso_installer_path: "{{ libvirt_vm_disk_dir }}/{{ libvirt_vm_iso_filename }}"
+libvirt_vm_iso_install_disk_size_gib: 20
+libvirt_vm_iso_install_extra_args: inst.text console=ttyS0,115200n8
 
 libvirt_vm_cloud_init_default: |
   #cloud-config

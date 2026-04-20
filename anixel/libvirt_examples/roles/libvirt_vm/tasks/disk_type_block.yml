@@ -1,0 +1,108 @@
+# SPDX-License-Identifier: MIT-0
+---
+# Import: cache image → optional bz2 / raw|img → qcow2 → copy to images/vm-<name>.qcow2 → community.libvirt.virt_install.
+
+- name: Require import guest variables | libvirt_vm
+  ansible.builtin.assert:
+    that:
+      - libvirt_vm_name is defined
+      - libvirt_vm_name | length > 0
+      - libvirt_vm_os_name is defined
+      - libvirt_vm_os_name | length > 0
+      - libvirt_vm_download_url is defined
+      - libvirt_vm_download_url | string | length > 0
+      - libvirt_vm_networks is defined
+      - libvirt_vm_networks | length > 0
+    fail_msg: >-
+      Set libvirt_vm_name, libvirt_vm_os_name, libvirt_vm_download_url, and a non-empty libvirt_vm_networks list.
+
+- name: Build cloud-init payload for virt_install | libvirt_vm
+  when: libvirt_vm_cloud_init_enabled | bool
+  ansible.builtin.set_fact:
+    libvirt_vm__cloud_init:
+      user_data: "{{ libvirt_vm_cloud_init_user_data | default(libvirt_vm_cloud_init_default) }}"
+      disable: "{{ libvirt_vm_cloud_init_disable }}"
+
+- name: Download OS image to cache | libvirt_vm
+  ansible.builtin.get_url:
+    url: "{{ libvirt_vm_download_url }}"
+    dest: "{{ libvirt_vm_image_cache_dir }}/{{ libvirt_vm_download_url | basename }}"
+    mode: "0644"
+    timeout: "{{ libvirt_vm_qcow2_download_timeout }}"
+    force: false
+
+- name: Track working file in cache | libvirt_vm
+  ansible.builtin.set_fact:
+    libvirt_vm__ds_work: "{{ libvirt_vm_image_cache_dir }}/{{ libvirt_vm_download_url | basename }}"
+
+- name: Decompress bz2 in cache | libvirt_vm
+  when: libvirt_vm__ds_work | regex_search('\.bz2$', ignorecase=True)
+  ansible.builtin.command:
+    argv:
+      - bunzip2
+      - -f
+      - -k
+      - "{{ libvirt_vm__ds_work }}"
+    creates: "{{ libvirt_vm__ds_work | regex_replace('(?i)\\.bz2$', '') }}"
+
+- name: Update path after bz2 | libvirt_vm
+  when: libvirt_vm__ds_work | regex_search('\.bz2$', ignorecase=True)
+  ansible.builtin.set_fact:
+    libvirt_vm__ds_work: "{{ libvirt_vm__ds_work | regex_replace('(?i)\\.bz2$', '') }}"
+
+- name: Convert raw or disk image to qcow2 in cache | libvirt_vm
+  when: >-
+    (libvirt_vm_disk_type == 'raw')
+    or (
+      libvirt_vm_disk_type == 'img'
+      and not (libvirt_vm__ds_work | regex_search('\.qcow2$', ignorecase=True))
+    )
+    or (libvirt_vm__ds_work | regex_search('\.(raw|img)$', ignorecase=True))
+  ansible.builtin.command:
+    argv:
+      - qemu-img
+      - convert
+      - -f
+      - raw
+      - -O
+      - qcow2
+      - "{{ libvirt_vm__ds_work }}"
+      - "{{ libvirt_vm_image_cache_dir }}/{{ libvirt_vm__ds_work | basename | regex_replace('(?i)\\.(raw|img)$', '.qcow2') }}"
+    creates: "{{ libvirt_vm_image_cache_dir }}/{{ libvirt_vm__ds_work | basename | regex_replace('(?i)\\.(raw|img)$', '.qcow2') }}"
+
+- name: Update path after raw or img to qcow2 | libvirt_vm
+  when: >-
+    (libvirt_vm_disk_type == 'raw')
+    or (
+      libvirt_vm_disk_type == 'img'
+      and not (libvirt_vm__ds_work | regex_search('\.qcow2$', ignorecase=True))
+    )
+    or (libvirt_vm__ds_work | regex_search('\.(raw|img)$', ignorecase=True))
+  ansible.builtin.set_fact:
+    libvirt_vm__ds_work: "{{ libvirt_vm_image_cache_dir }}/{{ libvirt_vm__ds_work | basename | regex_replace('(?i)\\.(raw|img)$', '.qcow2') }}"
+
+- name: Copy cached qcow2 to per-VM image path | libvirt_vm
+  ansible.builtin.copy:
+    src: "{{ libvirt_vm__ds_work }}"
+    dest: "{{ libvirt_vm_images_dir }}/vm-{{ libvirt_vm_name }}.qcow2"
+    remote_src: true
+    mode: "0644"
+    force: false
+
+- name: Create libvirt domain from imported disks | libvirt_vm
+  community.libvirt.virt_install:
+    name: "{{ libvirt_vm_name }}"
+    memory: "{{ libvirt_vm_memory }}"
+    vcpus: "{{ libvirt_vm_vcpus }}"
+    import: true
+    disks:
+      - path: "{{ libvirt_vm_images_dir }}/vm-{{ libvirt_vm_name }}.qcow2"
+        format: qcow2
+    osinfo:
+      name: "{{ libvirt_vm_os_name }}"
+    graphics:
+      type: "{{ libvirt_vm_graphics_type }}"
+    serial: "{{ {'value': 'pty'} if libvirt_vm_serial_console_enabled | bool else omit }}"
+    autostart: "{{ libvirt_vm_autostart }}"
+    networks: "{{ libvirt_vm_networks }}"
+    cloud_init: "{{ libvirt_vm__cloud_init if (libvirt_vm_cloud_init_enabled | bool) else omit }}"

@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: MIT-0
 galaxy_info:
   author: your name
-  description: Provision one libvirt domain from a qcow2 image URL (cache, optional bz2/raw convert, virt_install).
+  description: Provision one libvirt domain (flat disk_type qcow2/raw/img/iso, cache, virt_install).
   license: GPL-2.0-or-later
   min_ansible_version: "2.14"
   galaxy_tags:
