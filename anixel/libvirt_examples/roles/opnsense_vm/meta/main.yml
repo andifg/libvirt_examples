@@ -1,0 +1,12 @@
+# SPDX-License-Identifier: MIT-0
+galaxy_info:
+  author: your name
+  description: >-
+    Provision OPNsense from a nano image URL via libvirt_vm (import qcow2 only).
+  license: GPL-2.0-or-later
+  min_ansible_version: "2.14"
+  galaxy_tags:
+    - libvirt
+    - kvm
+    - opnsense
+dependencies: []

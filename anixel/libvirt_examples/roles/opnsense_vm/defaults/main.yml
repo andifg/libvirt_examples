@@ -1,0 +1,16 @@
+# SPDX-License-Identifier: MIT-0
+---
+# Paths passed through to libvirt_vm (align with libvirt_install on the hypervisor).
+opnsense_vm_image_cache_dir: /var/lib/libvirt/image-cache
+opnsense_vm_images_dir: /var/lib/libvirt/images
+opnsense_vm_qcow2_download_timeout: 3600
+
+opnsense_vm_name: opnsense-vm
+opnsense_vm_url: https://opnsense.c0urier.net/releases/26.1/OPNsense-26.1-nano-amd64.img.bz2
+opnsense_vm_os_name: freebsd14.2
+
+# Omitted from virt_install for OPNsense (no NoCloud); set true only for unusual testing.
+opnsense_vm_cloud_init_enabled: false
+
+# Caller must set at least two entries (e.g. LAN then WAN), e.g. [{ network: "{{ lan_net }}" }, ...]
+opnsense_vm_networks: []

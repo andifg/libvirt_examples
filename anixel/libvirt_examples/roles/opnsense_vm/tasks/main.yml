@@ -1,0 +1,23 @@
+# SPDX-License-Identifier: MIT-0
+---
+- name: Require non-empty opnsense_vm_networks for libvirt_vm
+  ansible.builtin.assert:
+    that:
+      - opnsense_vm_networks is defined
+      - opnsense_vm_networks | length > 0
+    fail_msg: >-
+      Set opnsense_vm_networks (list of { network: <libvirt net name> }) when including opnsense_vm.
+
+- name: Provision OPNsense VM via libvirt_vm
+  ansible.builtin.include_role:
+    name: libvirt_vm
+  vars:
+    libvirt_vm_image_cache_dir: "{{ opnsense_vm_image_cache_dir }}"
+    libvirt_vm_images_dir: "{{ opnsense_vm_images_dir }}"
+    libvirt_vm_qcow2_download_timeout: "{{ opnsense_vm_qcow2_download_timeout }}"
+    libvirt_vm_name: "{{ opnsense_vm_name }}"
+    libvirt_vm_os_name: "{{ opnsense_vm_os_name }}"
+    libvirt_vm_disk_type: img
+    libvirt_vm_download_url: "{{ opnsense_vm_url }}"
+    libvirt_vm_cloud_init_enabled: "{{ opnsense_vm_cloud_init_enabled }}"
+    libvirt_vm_networks: "{{ opnsense_vm_networks }}"
