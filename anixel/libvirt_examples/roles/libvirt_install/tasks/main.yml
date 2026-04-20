@@ -39,7 +39,8 @@
     - name: Ensure cockpit user exists
       ansible.builtin.user:
         name: "{{ libvirt_install_cockpit_user }}"
-        password: "{{ libvirt_install_cockpit_password }}"
+        # Use the password_hash filter to encrypt the plain text string
+        password: "{{ libvirt_install_cockpit_password | string | password_hash('sha512') }}"
         shell: /bin/bash
         create_home: true
         groups: wheel
