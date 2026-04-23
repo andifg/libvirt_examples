@@ -4,3 +4,4 @@ collections:
   type: dir
 - name: community.libvirt
   version: 2.1.0
+- name: community.general

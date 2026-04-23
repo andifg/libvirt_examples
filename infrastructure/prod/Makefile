@@ -7,8 +7,12 @@ install:
 run:
 	ansible-playbook anixel.libvirt_examples.run
 
+test-iso:
+	ansible-playbook anixel.libvirt_examples.test_iso
+
 # Runs role libvirt_emtpy_host (undefine all domains + delete their volumes; remove all libvirt networks).
 destroy:
 	ansible-playbook anixel.libvirt_examples.run --tags destroy
 
-.PHONY: install run destroy
+.PHONY: install run test-iso destroy
+
