@@ -1,0 +1,13 @@
+# SPDX-License-Identifier: MIT-0
+---
+# destination_nat → include tasks/destination_nat.yml. Use "none" for install/start firewalld only.
+firewalld_mgmt_type: destination_nat
+
+# firewalld zone for the single port_forward rule (default upstream is often public).
+firewalld_mgmt_zone: public
+firewalld_mgmt_permanent: true
+firewalld_mgmt_immediate: true
+
+# Single destination NAT (port_forward): set port and to_addr in the playbook or inventory.
+# Optional: proto (default tcp), to_port (default same as port).
+firewalld_mgmt_proto: tcp

@@ -1,0 +1,26 @@
+# SPDX-License-Identifier: MIT-0
+---
+# Destination NAT via firewalld port_forward (DNAT-style forward to to_addr:toport).
+
+- name: Require destination NAT parameters | firewalld_mgmt
+  ansible.builtin.assert:
+    that:
+      - firewalld_mgmt_port is defined
+      - firewalld_mgmt_port | string | length > 0
+      - firewalld_mgmt_to_addr is defined
+      - firewalld_mgmt_to_addr | string | length > 0
+    fail_msg: >-
+      Set firewalld_mgmt_port and firewalld_mgmt_to_addr (optional: firewalld_mgmt_proto,
+      firewalld_mgmt_to_port).
+
+- name: Apply firewalld destination NAT (port_forward) | firewalld_mgmt
+  ansible.posix.firewalld:
+    zone: "{{ firewalld_mgmt_zone }}"
+    permanent: "{{ firewalld_mgmt_permanent | bool }}"
+    immediate: "{{ firewalld_mgmt_immediate | bool }}"
+    state: enabled
+    port_forward:
+      - port: "{{ firewalld_mgmt_port | string }}"
+        proto: "{{ firewalld_mgmt_proto }}"
+        toport: "{{ (firewalld_mgmt_to_port | default(firewalld_mgmt_port)) | string }}"
+        toaddr: "{{ firewalld_mgmt_to_addr }}"

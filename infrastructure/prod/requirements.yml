@@ -2,6 +2,7 @@
 collections:
 - name: ../../anixel/libvirt_examples
   type: dir
+- name: ansible.posix
 - name: community.libvirt
   version: 2.1.0
 - name: community.general

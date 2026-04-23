@@ -1,0 +1,25 @@
+# SPDX-License-Identifier: MIT-0
+---
+# Destination NAT uses firewalld port_forward (DNAT-style forward to to_addr:toport).
+
+- name: Require Red Hat family OS
+  ansible.builtin.assert:
+    that:
+      - ansible_os_family == "RedHat"
+    fail_msg: >-
+      This role targets Red Hat family systems only (ansible_os_family: {{ ansible_os_family }}).
+
+- name: Ensure firewalld is installed | firewalld_mgmt
+  ansible.builtin.package:
+    name: firewalld
+    state: present
+
+- name: Ensure firewalld is started and enabled | firewalld_mgmt
+  ansible.builtin.systemd_service:
+    name: firewalld
+    state: started
+    enabled: true
+
+- name: Include destination NAT configuration | firewalld_mgmt
+  ansible.builtin.include_tasks: destination_nat.yml
+  when: firewalld_mgmt_type == 'destination_nat'
