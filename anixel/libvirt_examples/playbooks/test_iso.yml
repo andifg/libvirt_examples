@@ -1,0 +1,59 @@
+# SPDX-License-Identifier: MIT-0
+---
+# Minimal smoke test: libvirt stack → one NAT network → one VM booting AlmaLinux 9
+# minimal ISO from CDROM. No VNC/SPICE by default (`libvirt_vm_graphics_type: none`).
+# ISO `virt_install` uses fixed serial/console args in `disk_type_iso_install.yml`; use
+# `virsh console <name>`. Raise `libvirt_vm_memory` here if the installer needs more RAM.
+#
+# Supply `libvirt_install_cockpit_password` via inventory, group_vars, host_vars, or `-e`
+# (same requirement as `opnsense_setup.yml` for `libvirt_install`).
+
+- name: Test ISO install (AlmaLinux 9 minimal)
+  hosts: all
+  become: true
+  vars:
+    test_iso_net: test-iso-lan
+    vm_cache: /var/lib/libvirt/image-cache
+    vm_images: /var/lib/libvirt/images
+  tasks:
+    - name: Packages, cockpit, and libvirtd
+      ansible.builtin.include_role:
+        name: libvirt_install
+      vars:
+        libvirt_install_image_cache_dir: "{{ vm_cache }}"
+        libvirt_install_images_dir: "{{ vm_images }}"
+
+    - name: Define test NAT network (single network for the ISO VM)
+      ansible.builtin.include_role:
+        name: libvirt_network
+      vars:
+        libvirt_network_type: nat
+        libvirt_network_name: "{{ test_iso_net }}"
+        libvirt_network_bridge: testiso0
+        libvirt_network_forward_mode: nat
+        libvirt_network_ip_address: 192.168.200.1
+        libvirt_network_ip_netmask: 255.255.255.0
+        libvirt_network_dhcp_enabled: true
+        libvirt_network_dhcp_range_start: 192.168.200.2
+        libvirt_network_dhcp_range_end: 192.168.200.254
+        libvirt_network_ipv6_enabled: false
+        libvirt_network_ipv6_address: 2001:db8:ca2:10::1
+        libvirt_network_ipv6_prefix: "64"
+
+    - name: Provision AlmaLinux 9 minimal VM (ISO install path)
+      ansible.builtin.include_role:
+        name: libvirt_vm
+      vars:
+        libvirt_vm_image_cache_dir: "{{ vm_cache }}"
+        libvirt_vm_images_dir: "{{ vm_images }}"
+        libvirt_vm_qcow2_download_timeout: 3600
+        libvirt_vm_memory: 4096
+        libvirt_vm_name: almalinux9-iso-test
+        libvirt_vm_disk_type: iso
+        libvirt_vm_download_url: >-
+          https://repo.almalinux.org/almalinux/9/isos/x86_64/AlmaLinux-9.7-x86_64-minimal.iso
+        libvirt_vm_os_name: almalinux9
+        libvirt_vm_networks:
+          - network: "{{ test_iso_net }}"
+        libvirt_vm_cloud_init_enabled: false
+        libvirt_vm_graphics_type: none

@@ -11,6 +11,8 @@
 # libvirt_install_cockpit_password: required for libvirt_install (group_vars / host_vars / -e).
 # WAN NAT and gateway IP live in `virsh net-dumpxml <wan_net>`, not in `virsh dumpxml` for the VM.
 # If WAN was defined without NAT earlier: `virsh net-destroy <wan_net>`, `virsh net-undefine <wan_net>`, re-run this playbook.
+#
+# OPNsense VM: see role `opnsense_vm` (nano image import via `libvirt_vm` only).
 
 
 # ssh -L 8118:192.168.1.1:443 -J root@88.99.99.79 test@192.168.254.2
@@ -32,8 +34,6 @@
       vars:
         libvirt_install_image_cache_dir: "{{ vm_cache }}"
         libvirt_install_images_dir: "{{ vm_images }}"
-
-
 
     - name: Define Opnsense WAN (NAT)
       ansible.builtin.include_role:
@@ -77,18 +77,14 @@
         libvirt_network_ipv6_address: 2001:db8:ca2:3::1
         libvirt_network_ipv6_prefix: "64"
 
-    - name: Provision Opnsense VM
+    - name: Provision OPNsense VM (nano image import)
       ansible.builtin.include_role:
-        name: libvirt_vm
+        name: opnsense_vm
       vars:
-        libvirt_vm_image_cache_dir: "{{ vm_cache }}"
-        libvirt_vm_images_dir: "{{ vm_images }}"
-        libvirt_vm_qcow2_download_timeout: 3600
-        libvirt_vm_name: opnsense-vm
-        libvirt_vm_url: https://opnsense.c0urier.net/releases/26.1/OPNsense-26.1-nano-amd64.img.bz2
-        libvirt_vm_os_name: freebsd14.2
+        opnsense_vm_image_cache_dir: "{{ vm_cache }}"
+        opnsense_vm_images_dir: "{{ vm_images }}"
         # NIC order: LAN then WAN (adjust if your OPNsense image expects the opposite).
-        libvirt_vm_networks:
+        opnsense_vm_networks:
           - network: "{{ lan_net }}"
           - network: "{{ wan_net }}"
 
@@ -100,7 +96,8 @@
         libvirt_vm_images_dir: "{{ vm_images }}"
         libvirt_vm_qcow2_download_timeout: 3600
         libvirt_vm_name: centos-mgmt-vm
-        libvirt_vm_url: https://cloud.centos.org/centos/10-stream/x86_64/images/CentOS-Stream-GenericCloud-x86_64-10-latest.x86_64.qcow2
+        libvirt_vm_disk_type: qcow2
+        libvirt_vm_download_url: https://cloud.centos.org/centos/10-stream/x86_64/images/CentOS-Stream-GenericCloud-x86_64-10-latest.x86_64.qcow2
         libvirt_vm_os_name: centos-stream10
         libvirt_vm_networks:
           - network: "{{ lan_net }}"
@@ -115,9 +112,11 @@
         libvirt_vm_images_dir: "{{ vm_images }}"
         libvirt_vm_qcow2_download_timeout: 3600
         libvirt_vm_name: centos-haproxy-vm
-        libvirt_vm_url: https://cloud.centos.org/centos/10-stream/x86_64/images/CentOS-Stream-GenericCloud-x86_64-10-latest.x86_64.qcow2
+        libvirt_vm_disk_type: qcow2
+        libvirt_vm_download_url: https://cloud.centos.org/centos/10-stream/x86_64/images/CentOS-Stream-GenericCloud-x86_64-10-latest.x86_64.qcow2
         libvirt_vm_os_name: centos-stream10
-        libvirt_vm_nat_network_name: "{{ lan_net }}"
+        libvirt_vm_networks:
+          - network: "{{ lan_net }}"
         libvirt_vm_cloud_init_disable: false
         libvirt_vm_cloud_init_user_data: |
           #cloud-config
