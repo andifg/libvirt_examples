@@ -10,9 +10,12 @@ run:
 test-iso:
 	ansible-playbook anixel.libvirt_examples.test_iso
 
+forward-to-haproxy:
+	ansible-playbook anixel.libvirt_examples.forward_to_haproxy
+
 # Runs role libvirt_emtpy_host (undefine all domains + delete their volumes; remove all libvirt networks).
 destroy:
 	ansible-playbook anixel.libvirt_examples.run --tags destroy
 
-.PHONY: install run test-iso destroy
+.PHONY: install run test-iso forward-to-haproxy destroy
 
