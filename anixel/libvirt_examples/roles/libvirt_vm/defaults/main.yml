@@ -5,7 +5,7 @@
 # Optional: libvirt_vm_memory, libvirt_vm_vcpus, libvirt_vm_graphics_type, libvirt_vm_serial_console_enabled,
 #           libvirt_vm_iso_install_disk_size_gib, libvirt_vm_iso_install_extra_args, libvirt_vm_iso_install_console,
 #           libvirt_vm_autostart,
-#           libvirt_vm_networks (non-empty list of { network: <libvirt net name> }),
+#           libvirt_vm_networks (non-empty list; each item is passed as-is to community.libvirt.virt_install networks — see examples below),
 #           libvirt_vm_cloud_init_enabled, libvirt_vm_cloud_init_user_data, libvirt_vm_cloud_init_disable,
 #           libvirt_vm_disk_dir (iso mode), libvirt_vm_image_cache_dir, libvirt_vm_images_dir.
 
@@ -19,6 +19,24 @@ libvirt_vm_images_dir: /var/lib/libvirt/images
 libvirt_vm_disk_dir: "{{ libvirt_vm_images_dir }}/vm-{{ libvirt_vm_name }}"
 libvirt_vm_qcow2_download_timeout: 3600
 
+# libvirt_vm_networks — list of NIC dicts for virt_install (module community.libvirt.virt_install, parameter networks).
+# Examples (copy into your playbook vars; keep [] here unless this role file is your inventory):
+#
+#   One virtio NIC on libvirt network "my-lab":
+#     libvirt_vm_networks:
+#       - network: my-lab
+#
+#   Fixed MAC for static DHCP on that network (libvirt_network_dhcp_hosts uses the same mac string):
+#     libvirt_vm_networks:
+#       - network: my-lab
+#         mac:
+#           address: "52:54:00:12:34:56"
+#
+#   Bridge instead of virtual network:
+#     libvirt_vm_networks:
+#       - bridge: br0
+#         model:
+#           type: virtio
 libvirt_vm_networks: []
 
 libvirt_vm_memory: 2048

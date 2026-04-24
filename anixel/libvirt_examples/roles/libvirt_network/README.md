@@ -10,3 +10,7 @@ Variables use the **`libvirt_network_*`** prefix (see `defaults/main.yml`). Invo
 Requires `libvirtd` running and collection `community.libvirt`. Run after a play that starts **`libvirtd`** (for example **`libvirt_install`** in **`playbooks/opnsense_setup.yml`**).
 
 Guest **`virsh dumpxml`** only shows `<source network='…' bridge='…'/>` for a virtual NIC. **NAT, forward mode, and the libvirt host address** appear in **`virsh net-dumpxml <network-name>`**, not in the domain XML.
+
+## Static DHCP reservations
+
+When **`libvirt_network_dhcp_enabled`** is true and the network is not **`isolated`**, set **`libvirt_network_dhcp_hosts`** to a list of **`{ mac: "52:54:…", ip: "192.168.x.y" }`** entries. These become **`<host mac=… ip=…/>`** elements inside **`<dhcp>`** next to **`<range>`**. Match each **`mac`** to a guest NIC (**`libvirt_vm_networks`** with the same **`mac`** string on **`libvirt_vm`**).

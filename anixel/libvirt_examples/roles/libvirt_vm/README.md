@@ -1,6 +1,6 @@
 # libvirt_vm
 
-Provisions **one** libvirt guest using flat **`libvirt_vm_*`** variables. **`tasks/main.yml`** checks Red Hat family and **`libvirt_vm_disk_type`**, then includes **`tasks/disk_type_block.yml`** (**`qcow2`** / **`raw`** / **`img`**) or **`tasks/disk_type_iso_install.yml`** (**`iso`**).
+Provisions **one** libvirt guest using flat **`libvirt_vm_*`** variables. **`tasks/main.yml`** checks Red Hat family and **`libvirt_vm_disk_type`**, then includes **`tasks/disk_type_block.yml`** (**`qcow2`** / **`raw`** / **`img`**) or **`tasks/disk_type_iso_install.yml`** (**`iso`**). **`libvirt_vm_networks`** is passed verbatim to **`virt_install`** **`networks`**.
 
 ## Requirements
 
@@ -33,7 +33,7 @@ Provisions **one** libvirt guest using flat **`libvirt_vm_*`** variables. **`tas
 | **`libvirt_vm_iso_install_console`** | no | **`virt_install`** **`console`** dict for **ISO** installs (default PTY + **`target_type: serial`**). |
 | **`libvirt_vm_memory`**, **`libvirt_vm_vcpus`**, **`libvirt_vm_graphics_type`**, **`libvirt_vm_autostart`** | no | See **`defaults/main.yml`** (**ISO** install uses **`libvirt_vm_memory`** / **`libvirt_vm_vcpus`**) |
 | **`libvirt_vm_serial_console_enabled`** | no | **Import** only: if **`true`** (default), **`virt_install`** adds **`--serial pty`**. |
-| **`libvirt_vm_networks`** | yes | Non-empty list of **`{ network: <libvirt net name> }`** for **`virt_install`** |
+| **`libvirt_vm_networks`** | yes | List passed as-is to **`virt_install`** **`networks`** (see **`community.libvirt.virt_install`** and commented examples in **`defaults/main.yml`**). Use **`mac: { address: "52:54:…" }`** for a fixed MAC (e.g. to match **`libvirt_network_dhcp_hosts`**). |
 | **`libvirt_vm_cloud_init_enabled`**, **`libvirt_vm_cloud_init_user_data`**, **`libvirt_vm_cloud_init_disable`** | no | OPNsense and similar guests usually set **`libvirt_vm_cloud_init_enabled: false`**. |
 
 Paths **`libvirt_vm_image_cache_dir`** and **`libvirt_vm_images_dir`** align with **`libvirt_install`** when both roles target the same host.
@@ -50,6 +50,8 @@ Paths **`libvirt_vm_image_cache_dir`** and **`libvirt_vm_images_dir`** align wit
     libvirt_vm_download_url: https://example.com/image.qcow2
     libvirt_vm_networks:
       - network: my-lan
+      # mac:
+      #   address: "52:54:00:12:34:56"
 ```
 
 ## Plugins

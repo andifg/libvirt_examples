@@ -22,6 +22,9 @@
 {% if libvirt_network_dhcp_enabled %}
     <dhcp>
       <range start="{{ libvirt_network_dhcp_range_start }}" end="{{ libvirt_network_dhcp_range_end }}"/>
+{% for h in libvirt_network_dhcp_hosts | default([]) %}
+      <host mac="{{ h.mac }}" ip="{{ h.ip }}"/>
+{% endfor %}
     </dhcp>
 {% endif %}
   </ip>
