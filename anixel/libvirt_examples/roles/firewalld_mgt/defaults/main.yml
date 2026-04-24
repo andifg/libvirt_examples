@@ -3,7 +3,7 @@
 # destination_nat → include tasks/destination_nat.yml. Use "none" for install/start firewalld only.
 firewalld_mgmt_type: destination_nat
 
-# firewalld zone for the single port_forward rule (default upstream is often public).
+# firewalld zone for port_forward rules (default upstream is often public).
 firewalld_mgmt_zone: public
 firewalld_mgmt_permanent: true
 firewalld_mgmt_immediate: true
