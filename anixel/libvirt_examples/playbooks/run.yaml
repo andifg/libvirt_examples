@@ -1,11 +1,41 @@
 # SPDX-License-Identifier: MIT-0
 ---
-- import_playbook: opnsense_setup.yml
+- name: Provision Opnsense setup
+  import_playbook: opnsense_setup.yml
 
 - name: Undefine all libvirt domains (delete VM disks), remove configured networks
   hosts: all
   become: true
+  vars:
+    # Override if your DNAT target differs.
+    firewalld_mgmt_teardown_to_addr: "{{ haproxy_vm_ip | default('192.168.160.50') }}"
   tasks:
+    - name: Remove firewalld DNAT TCP 80 (if present)
+      ansible.builtin.include_role:
+        name: firewalld_mgt
+        apply:
+          tags:
+            - destroy
+      vars:
+        firewalld_mgmt_mode: absent
+        firewalld_mgmt_type: destination_nat
+        firewalld_mgmt_port: "80"
+        firewalld_mgmt_to_addr: "{{ firewalld_mgmt_teardown_to_addr }}"
+      tags: [never, destroy]
+
+    # - name: Remove firewalld DNAT TCP 443 (if present)
+    #   ansible.builtin.include_role:
+    #     name: firewalld_mgt
+    #     apply:
+    #       tags:
+    #         - destroy
+    #   vars:
+    #     firewalld_mgmt_mode: absent
+    #     firewalld_mgmt_type: destination_nat
+    #     firewalld_mgmt_port: "443"
+    #     firewalld_mgmt_to_addr: "{{ firewalld_mgmt_teardown_to_addr }}"
+    #   tags: [never, destroy]
+
     - name: Tear down libvirt guests and networks
       ansible.builtin.include_role:
         name: libvirt_emtpy_host

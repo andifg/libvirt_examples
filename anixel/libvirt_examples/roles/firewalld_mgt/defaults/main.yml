@@ -3,6 +3,10 @@
 # destination_nat → include tasks/destination_nat.yml. Use "none" for install/start firewalld only.
 firewalld_mgmt_type: destination_nat
 
+# Role-level desired mode for managed firewalld_mgt resources.
+# present -> create/ensure NAT forward exists, absent -> remove it.
+firewalld_mgmt_mode: present
+
 # firewalld zone for port_forward rules (default upstream is often public).
 firewalld_mgmt_zone: public
 firewalld_mgmt_permanent: true

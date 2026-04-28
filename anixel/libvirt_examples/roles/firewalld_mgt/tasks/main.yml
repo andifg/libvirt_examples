@@ -9,9 +9,18 @@
     fail_msg: >-
       This role targets Red Hat family systems only (ansible_os_family: {{ ansible_os_family }}).
 
+- name: Require supported firewalld_mgmt_mode | firewalld_mgmt
+  ansible.builtin.assert:
+    that:
+      - firewalld_mgmt_mode in ['present', 'absent']
+    fail_msg: >-
+      Set firewalld_mgmt_mode to present or absent.
+
 - name: Ensure firewalld is installed | firewalld_mgmt
   ansible.builtin.package:
-    name: firewalld
+    name:
+      - firewalld
+      - nftables
     state: present
 
 - name: Ensure firewalld is started and enabled | firewalld_mgmt

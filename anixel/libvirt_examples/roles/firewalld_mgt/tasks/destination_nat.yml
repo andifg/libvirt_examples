@@ -13,12 +13,21 @@
       Set firewalld_mgmt_port and firewalld_mgmt_to_addr (optional: firewalld_mgmt_proto,
       firewalld_mgmt_to_port).
 
+- name: Enable IPv4 forwarding for destination NAT | firewalld_mgmt
+  when: firewalld_mgmt_mode == 'present'
+  ansible.posix.sysctl:
+    name: net.ipv4.ip_forward
+    value: "1"
+    state: present
+    sysctl_set: true
+    reload: true
+
 - name: Apply firewalld destination NAT (port_forward) | firewalld_mgmt
   ansible.posix.firewalld:
     zone: "{{ firewalld_mgmt_zone }}"
     permanent: "{{ firewalld_mgmt_permanent | bool }}"
     immediate: "{{ firewalld_mgmt_immediate | bool }}"
-    state: enabled
+    state: "{{ 'enabled' if firewalld_mgmt_mode == 'present' else 'disabled' }}"
     port_forward:
       - port: "{{ firewalld_mgmt_port | string }}"
         proto: "{{ firewalld_mgmt_proto }}"
