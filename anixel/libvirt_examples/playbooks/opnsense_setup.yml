@@ -8,7 +8,7 @@
 # Mgmt (/30 NAT): backdoor segment; libvirt host is .1, DHCP assigns .2. The CentOS mgmt VM also
 # uses lan_net so it shares L2 with Opnsense LAN (second NIC is mgmt_net).
 #
-# libvirt_install_cockpit_password: required for libvirt_install (group_vars / host_vars / -e).
+# libvirt_install_username_password: required for libvirt_install (group_vars / host_vars / -e).
 # WAN NAT and gateway IP live in `virsh net-dumpxml <wan_net>`, not in `virsh dumpxml` for the VM.
 # If WAN was defined without NAT earlier: `virsh net-destroy <wan_net>`, `virsh net-undefine <wan_net>`, re-run this playbook.
 #

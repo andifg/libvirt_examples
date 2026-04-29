@@ -3,7 +3,7 @@
 # Single play: libvirt -> OPEN lab network (DHCP + static reservation for HAProxy) -> CentOS Stream
 # HAProxy VM -> firewalld DNAT on the hypervisor (port 80 -> haproxy_vm_ip). MAC/IP in play vars.
 #
-# libvirt_install_cockpit_password: required for libvirt_install (group_vars / host_vars / -e).
+# libvirt_install_username_password: required for libvirt_install (group_vars / host_vars / -e).
 
 - name: HAProxy open-network lab hypervisor
   hosts: all
@@ -70,8 +70,8 @@
           #cloud-config
           users:
             - default
-            - name: test
-              plain_text_passwd: hello1234
+            - name: {{ vm_user_name }}
+              plain_text_passwd: {{ vm_user_password }}
               lock_passwd: false
               groups: wheel
               sudo: ALL=(ALL) NOPASSWD:ALL
@@ -138,6 +138,20 @@
         firewalld_mgmt_type: destination_nat
         firewalld_mgmt_port: "80"
         firewalld_mgmt_to_addr: "{{ haproxy_vm_ip }}"
+      tags: [never, destroy]
+
+    - name: Remove source NAT for OPEN lab interface on hypervisor (destroy path)
+      ansible.builtin.include_role:
+        name: firewalld_mgt
+        apply:
+          tags:
+            - destroy
+      vars: # noqa: var-naming
+        firewalld_mgmt_mode: absent
+        firewalld_mgmt_type: source_nat
+        firewalld_mgmt_source_nat_interface: hvopen0
+        firewalld_mgmt_source_nat_from_zone: trusted
+        firewalld_mgmt_source_nat_to_zone: public
       tags: [never, destroy]
 
     - name: Tear down libvirt guests and networks (destroy path)

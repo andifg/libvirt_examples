@@ -6,4 +6,4 @@
 libvirt_install_images_dir: /var/lib/libvirt/images
 libvirt_install_image_cache_dir: /var/lib/libvirt/image-cache
 
-libvirt_install_cockpit_user: cockpit
+libvirt_install_username: cockpit

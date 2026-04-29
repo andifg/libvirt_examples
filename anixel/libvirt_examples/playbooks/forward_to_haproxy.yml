@@ -3,7 +3,7 @@
 # Single play: libvirt → NAT lab network (DHCP + static reservation for HAProxy) → CentOS Stream
 # HAProxy VM → firewalld DNAT on the hypervisor (ports 80/443 → haproxy_vm_ip). MAC/IP in play vars.
 #
-# libvirt_install_cockpit_password: required for libvirt_install (group_vars / host_vars / -e).
+# libvirt_install_username_password: required for libvirt_install (group_vars / host_vars / -e).
 
 - name: HAProxy lab hypervisor
   hosts: all

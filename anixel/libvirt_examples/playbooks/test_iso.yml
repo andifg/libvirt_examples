@@ -5,7 +5,7 @@
 # ISO `virt_install` uses fixed serial/console args in `disk_type_iso_install.yml`; use
 # `virsh console <name>`. Raise `libvirt_vm_memory` here if the installer needs more RAM.
 #
-# Supply `libvirt_install_cockpit_password` via inventory, group_vars, host_vars, or `-e`
+# Supply `libvirt_install_username_password` via inventory, group_vars, host_vars, or `-e`
 # (same requirement as `opnsense_setup.yml` for `libvirt_install`).
 
 - name: Test ISO install (AlmaLinux 9 minimal)

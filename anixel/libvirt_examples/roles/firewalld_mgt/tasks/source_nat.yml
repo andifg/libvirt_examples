@@ -43,3 +43,12 @@
     immediate: "{{ firewalld_mgmt_immediate | bool }}"
     state: "{{ 'enabled' if firewalld_mgmt_mode == 'present' else 'disabled' }}"
     masquerade: true
+
+- name: Disable forward on source NAT zone when absent | firewalld_mgmt
+  when: firewalld_mgmt_mode == 'absent'
+  ansible.posix.firewalld:
+    zone: "{{ firewalld_mgmt_source_nat_from_zone }}"
+    permanent: "{{ firewalld_mgmt_permanent | bool }}"
+    immediate: "{{ firewalld_mgmt_immediate | bool }}"
+    state: enabled
+    forward: false
