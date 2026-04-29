@@ -13,9 +13,15 @@ test-iso:
 forward-to-haproxy:
 	ansible-playbook anixel.libvirt_examples.forward_to_haproxy
 
+forward-to-haproxy-open:
+	ansible-playbook anixel.libvirt_examples.forward_to_haproxy_open
+
+forward-to-haproxy-open_destroy:
+	ansible-playbook anixel.libvirt_examples.forward_to_haproxy_open --tags destroy
+
 # Runs role libvirt_emtpy_host (undefine all domains + delete their volumes; remove all libvirt networks).
 destroy:
 	ansible-playbook anixel.libvirt_examples.run --tags destroy
 
-.PHONY: install run test-iso forward-to-haproxy destroy
+.PHONY: install run test-iso forward-to-haproxy forward-to-haproxy-open forward-to-haproxy-open_destroy destroy
 

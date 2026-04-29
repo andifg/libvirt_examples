@@ -16,6 +16,13 @@
     fail_msg: >-
       Set firewalld_mgmt_mode to present or absent.
 
+- name: Require supported firewalld_mgmt_type | firewalld_mgmt
+  ansible.builtin.assert:
+    that:
+      - firewalld_mgmt_type in ['none', 'destination_nat', 'source_nat']
+    fail_msg: >-
+      Set firewalld_mgmt_type to none, destination_nat, or source_nat.
+
 - name: Ensure firewalld is installed | firewalld_mgmt
   ansible.builtin.package:
     name:
@@ -32,3 +39,7 @@
 - name: Include destination NAT configuration | firewalld_mgmt
   ansible.builtin.include_tasks: destination_nat.yml
   when: firewalld_mgmt_type == 'destination_nat'
+
+- name: Include source NAT configuration | firewalld_mgmt
+  ansible.builtin.include_tasks: source_nat.yml
+  when: firewalld_mgmt_type == 'source_nat'

@@ -1,0 +1,149 @@
+# SPDX-License-Identifier: MIT-0
+---
+# Single play: libvirt -> OPEN lab network (DHCP + static reservation for HAProxy) -> CentOS Stream
+# HAProxy VM -> firewalld DNAT on the hypervisor (port 80 -> haproxy_vm_ip). MAC/IP in play vars.
+#
+# libvirt_install_cockpit_password: required for libvirt_install (group_vars / host_vars / -e).
+
+- name: HAProxy open-network lab hypervisor
+  hosts: all
+  become: true
+  vars:
+    haproxy_net: haproxy-open-lab
+    # Guest NIC MAC must match libvirt_network_dhcp_hosts below (QEMU/KVM local range 52:54:00:...).
+    haproxy_vm_mac: "52:54:00:ab:cd:11"
+    haproxy_vm_ip: "192.168.170.50"
+    vm_cache: /var/lib/libvirt/image-cache
+    vm_images: /var/lib/libvirt/images
+  tasks:
+    - name: Packages, cockpit, and libvirtd
+      ansible.builtin.include_role:
+        name: libvirt_install
+      vars:
+        libvirt_install_image_cache_dir: "{{ vm_cache }}"
+        libvirt_install_images_dir: "{{ vm_images }}"
+
+    - name: Define lab network (OPEN + DHCP; libvirt dnsmasq provides DNS for the network)
+      ansible.builtin.include_role:
+        name: libvirt_network
+      vars:
+        libvirt_network_type: open
+        libvirt_network_name: "{{ haproxy_net }}"
+        libvirt_network_bridge: hvopen0
+        libvirt_network_forward_mode: open
+        libvirt_network_ip_address: 192.168.170.1
+        libvirt_network_ip_netmask: 255.255.255.0
+        libvirt_network_dhcp_enabled: true
+        libvirt_network_dhcp_range_start: 192.168.170.2
+        libvirt_network_dhcp_range_end: 192.168.170.254
+        libvirt_network_dhcp_hosts:
+          - mac: "{{ haproxy_vm_mac }}"
+            ip: "{{ haproxy_vm_ip }}"
+        libvirt_network_ipv6_enabled: false
+
+    - name: Enable source NAT for OPEN lab interface on hypervisor
+      ansible.builtin.include_role:
+        name: firewalld_mgt
+      vars: # noqa: var-naming
+        firewalld_mgmt_type: source_nat
+        firewalld_mgmt_source_nat_interface: hvopen0
+        firewalld_mgmt_source_nat_from_zone: trusted
+        firewalld_mgmt_source_nat_to_zone: public
+
+    - name: Provision CentOS Stream HAProxy VM
+      ansible.builtin.include_role:
+        name: libvirt_vm
+      vars:
+        libvirt_vm_image_cache_dir: "{{ vm_cache }}"
+        libvirt_vm_images_dir: "{{ vm_images }}"
+        libvirt_vm_qcow2_download_timeout: 3600
+        libvirt_vm_name: centos-haproxy-open-vm
+        libvirt_vm_disk_type: qcow2
+        libvirt_vm_download_url: https://cloud.centos.org/centos/10-stream/x86_64/images/CentOS-Stream-GenericCloud-x86_64-10-latest.x86_64.qcow2
+        libvirt_vm_os_name: centos-stream10
+        libvirt_vm_networks:
+          - network: "{{ haproxy_net }}"
+            mac:
+              address: "{{ haproxy_vm_mac }}"
+        libvirt_vm_cloud_init_disable: false
+        libvirt_vm_cloud_init_user_data: |
+          #cloud-config
+          users:
+            - default
+            - name: test
+              plain_text_passwd: hello1234
+              lock_passwd: false
+              groups: wheel
+              sudo: ALL=(ALL) NOPASSWD:ALL
+          ssh_pwauth: true
+          package_update: true
+          packages:
+            - firewalld
+            - haproxy
+          write_files:
+            - path: /etc/haproxy/haproxy.cfg
+              permissions: "0644"
+              content: |
+                global
+                    log /dev/log    local0
+                    chroot /var/lib/haproxy
+                    user haproxy
+                    group haproxy
+                    daemon
+                    maxconn 4096
+
+                defaults
+                    mode http
+                    log global
+                    option httplog
+                    timeout connect 10s
+                    timeout client 30s
+                    timeout server 30s
+
+                listen stats
+                    bind *:80
+                    stats enable
+                    stats uri /
+                    stats refresh 10s
+          runcmd:
+            - [systemctl, enable, "--now", firewalld]
+            - [firewall-cmd, --permanent, --add-service=http, --add-service=https]
+            - [firewall-cmd, --reload]
+            - [systemctl, enable, "--now", haproxy]
+
+    - name: DNAT hypervisor TCP 80 to HAProxy guest (firewalld public zone)
+      ansible.builtin.include_role:
+        name: firewalld_mgt
+      vars: # noqa: var-naming
+        firewalld_mgmt_type: destination_nat
+        firewalld_mgmt_port: "80"
+        firewalld_mgmt_to_addr: "{{ haproxy_vm_ip }}"
+
+    # - name: DNAT hypervisor TCP 443 to HAProxy guest (firewalld public zone)
+    #   ansible.builtin.include_role:
+    #     name: firewalld_mgt
+    #   vars:
+    #     firewalld_mgmt_type: destination_nat
+    #     firewalld_mgmt_port: "443"
+    #     firewalld_mgmt_to_addr: "{{ haproxy_vm_ip }}"
+
+    - name: Remove DNAT hypervisor TCP 80 to HAProxy guest (destroy path)
+      ansible.builtin.include_role:
+        name: firewalld_mgt
+        apply:
+          tags:
+            - destroy
+      vars: # noqa: var-naming
+        firewalld_mgmt_mode: absent
+        firewalld_mgmt_type: destination_nat
+        firewalld_mgmt_port: "80"
+        firewalld_mgmt_to_addr: "{{ haproxy_vm_ip }}"
+      tags: [never, destroy]
+
+    - name: Tear down libvirt guests and networks (destroy path)
+      ansible.builtin.include_role:
+        name: libvirt_emtpy_host
+        apply:
+          tags:
+            - destroy
+      tags: [never, destroy]

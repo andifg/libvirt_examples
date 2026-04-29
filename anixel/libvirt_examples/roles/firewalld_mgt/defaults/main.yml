@@ -1,6 +1,8 @@
 # SPDX-License-Identifier: MIT-0
 ---
-# destination_nat → include tasks/destination_nat.yml. Use "none" for install/start firewalld only.
+# destination_nat -> include tasks/destination_nat.yml
+# source_nat -> include tasks/source_nat.yml
+# none -> install/start firewalld only
 firewalld_mgmt_type: destination_nat
 
 # Role-level desired mode for managed firewalld_mgt resources.
@@ -15,3 +17,11 @@ firewalld_mgmt_immediate: true
 # Single destination NAT (port_forward): set port and to_addr in the playbook or inventory.
 # Optional: proto (default tcp), to_port (default same as port).
 firewalld_mgmt_proto: tcp
+
+# Source NAT mode (firewalld_mgmt_type: source_nat):
+# - firewalld_mgmt_source_nat_interface: source interface (required), e.g. hvopen0
+# - firewalld_mgmt_source_nat_from_zone: zone that should trust/accept that source interface
+# - firewalld_mgmt_source_nat_to_zone: egress zone where masquerade is enabled
+firewalld_mgmt_source_nat_interface: ""
+firewalld_mgmt_source_nat_from_zone: trusted
+firewalld_mgmt_source_nat_to_zone: public

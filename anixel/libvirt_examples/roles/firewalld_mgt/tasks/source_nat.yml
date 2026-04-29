@@ -1,0 +1,45 @@
+# SPDX-License-Identifier: MIT-0
+---
+# Source NAT via firewalld masquerade for traffic from source interface to egress zone.
+
+- name: Require source NAT parameters | firewalld_mgmt
+  ansible.builtin.assert:
+    that:
+      - firewalld_mgmt_source_nat_interface is defined
+      - firewalld_mgmt_source_nat_interface | string | length > 0
+    fail_msg: >-
+      Set firewalld_mgmt_source_nat_interface (e.g. hvopen0).
+
+- name: Enable IPv4 forwarding for source NAT | firewalld_mgmt
+  when: firewalld_mgmt_mode == 'present'
+  ansible.posix.sysctl:
+    name: net.ipv4.ip_forward
+    value: "1"
+    state: present
+    sysctl_set: true
+    reload: true
+
+- name: Ensure forward is enabled on source NAT zone | firewalld_mgmt
+  when: firewalld_mgmt_mode == 'present'
+  ansible.posix.firewalld:
+    zone: "{{ firewalld_mgmt_source_nat_from_zone }}"
+    permanent: "{{ firewalld_mgmt_permanent | bool }}"
+    immediate: "{{ firewalld_mgmt_immediate | bool }}"
+    state: enabled
+    forward: true
+
+- name: Ensure source interface is in source zone | firewalld_mgmt
+  ansible.posix.firewalld:
+    zone: "{{ firewalld_mgmt_source_nat_from_zone }}"
+    permanent: "{{ firewalld_mgmt_permanent | bool }}"
+    immediate: "{{ firewalld_mgmt_immediate | bool }}"
+    state: "{{ 'enabled' if firewalld_mgmt_mode == 'present' else 'disabled' }}"
+    interface: "{{ firewalld_mgmt_source_nat_interface }}"
+
+- name: Ensure masquerade on egress zone | firewalld_mgmt
+  ansible.posix.firewalld:
+    zone: "{{ firewalld_mgmt_source_nat_to_zone }}"
+    permanent: "{{ firewalld_mgmt_permanent | bool }}"
+    immediate: "{{ firewalld_mgmt_immediate | bool }}"
+    state: "{{ 'enabled' if firewalld_mgmt_mode == 'present' else 'disabled' }}"
+    masquerade: true
