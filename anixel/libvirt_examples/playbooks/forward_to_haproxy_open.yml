@@ -81,7 +81,64 @@
             - firewalld
             - haproxy
           write_files:
+            - path: /var/lib/haproxy/surprise.html
+              permissions: "0644"
+              content: |
+                <!DOCTYPE html>
+                <html lang="en">
+                <head>
+                  <meta charset="utf-8" />
+                  <meta name="viewport" content="width=device-width, initial-scale=1" />
+                  <title>Hello from the lab</title>
+                  <style>
+                    :root { color-scheme: dark; }
+                    * { box-sizing: border-box; }
+                    body {
+                      margin: 0; min-height: 100vh; display: grid; place-items: center;
+                      font-family: ui-sans-serif, system-ui, sans-serif;
+                      background: radial-gradient(ellipse at 30% 20%, #2d1b4e 0%, transparent 50%),
+                        radial-gradient(ellipse at 70% 80%, #0b3d2e 0%, transparent 45%),
+                        linear-gradient(165deg, #0a0a12 0%, #12122a 40%, #0d1520 100%);
+                      color: #e8e6f2;
+                    }
+                    .card {
+                      max-width: 34rem; padding: 2.25rem 2.5rem; text-align: center;
+                      border-radius: 1.25rem;
+                      background: linear-gradient(145deg, rgba(255,255,255,0.08), rgba(255,255,255,0.02));
+                      border: 1px solid rgba(255,255,255,0.12);
+                      box-shadow: 0 1.5rem 4rem rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.06);
+                      backdrop-filter: blur(12px);
+                    }
+                    h1 {
+                      font-weight: 700; font-size: clamp(1.5rem, 4vw, 2rem); letter-spacing: -0.02em;
+                      margin: 0 0 0.75rem;
+                      background: linear-gradient(120deg, #a78bfa, #34d399, #fcd34d);
+                      -webkit-background-clip: text; background-clip: text; color: transparent;
+                    }
+                    p { margin: 0; line-height: 1.65; opacity: 0.88; font-size: 1.05rem; }
+                    .spark {
+                      display: inline-block; margin-top: 1.5rem; font-size: 2.25rem;
+                      animation: pop 1.2s ease-in-out infinite alternate;
+                    }
+                    @keyframes pop {
+                      from { transform: scale(1) rotate(-6deg); filter: drop-shadow(0 0 0.5rem #a78bfa); }
+                      to { transform: scale(1.15) rotate(6deg); filter: drop-shadow(0 0 1.2rem #34d399); }
+                    }
+                    .footer { margin-top: 1.75rem; font-size: 0.8rem; opacity: 0.45; letter-spacing: 0.08em; text-transform: uppercase; }
+                  </style>
+                </head>
+                <body>
+                  <div class="card">
+                    <h1>You found the open-network lab</h1>
+                    <p>This page is served straight from HAProxy — no extra web stack. Your playbook wired the frontend, the backend answered, and the surprise is that <strong>it was HAProxy all along</strong>.</p>
+                    <span class="spark" aria-hidden="true">✨</span>
+                    <p class="footer">haproxy-open-lab · forward_to_haproxy_open</p>
+                  </div>
+                </body>
+                </html>
+            # After haproxy RPM so defaults exist; avoids losing our cfg to package ordering on some images.
             - path: /etc/haproxy/haproxy.cfg
+              defer: true
               permissions: "0644"
               content: |
                 global
@@ -100,10 +157,17 @@
                     timeout client 30s
                     timeout server 30s
 
-                listen stats
+                frontend fe_web
                     bind *:80
+                    default_backend be_surprise
+
+                backend be_surprise
+                    http-request return status 200 content-type "text/html; charset=utf-8" file /var/lib/haproxy/surprise.html
+
+                listen stats
+                    bind 127.0.0.1:8443
                     stats enable
-                    stats uri /
+                    stats uri /stats
                     stats refresh 10s
           runcmd:
             - [systemctl, enable, "--now", firewalld]
