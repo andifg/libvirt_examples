@@ -1,0 +1,13 @@
+# SPDX-License-Identifier: MIT-0
+---
+# Required: OCP client/installer release (directory name under the mirror), e.g. 4.20.18
+# https://mirror.openshift.com/pub/openshift-v4/clients/ocp/<openshift_install_version>/
+openshift_install_version: ""
+# Directory where the openshift-install executable is installed (copied from the extracted tarball).
+openshift_install_binary_dir: /usr/local/bin
+# Full path to openshift-install after install (convenience for other tasks).
+openshift_install_binary_path: "{{ openshift_install_binary_dir }}/openshift-install"
+# Full path to oc (linux x86_64 client tarball from the same mirror path).
+openshift_install_oc_binary_path: "{{ openshift_install_binary_dir }}/oc"
+# Cache directory; each release is unpacked under openshift_install_version/.
+openshift_install_download_root: /var/tmp/openshift-install-cache

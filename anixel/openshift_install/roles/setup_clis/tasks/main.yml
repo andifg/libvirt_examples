@@ -1,0 +1,66 @@
+# SPDX-License-Identifier: MIT-0
+---
+- name: Require openshift_install_version | openshift_install.setup_clis
+  ansible.builtin.assert:
+    that:
+      - openshift_install_version is defined
+      - openshift_install_version | string | length > 0
+    fail_msg: >-
+      Set openshift_install_version to an OCP release directory name (e.g. 4.20.18), matching
+      https://mirror.openshift.com/pub/openshift-v4/clients/ocp/<version>/
+
+- name: Set derived paths (linux x86_64 tarballs) | openshift_install.setup_clis
+  ansible.builtin.set_fact:
+    openshift_install_tarball: "openshift-install-linux-{{ openshift_install_version }}.tar.gz"
+    openshift_client_tarball: "openshift-client-linux-{{ openshift_install_version }}.tar.gz"
+    openshift_install_version_dir: "{{ openshift_install_download_root }}/{{ openshift_install_version }}"
+    openshift_install_tarball_url: >-
+      https://mirror.openshift.com/pub/openshift-v4/clients/ocp/{{ openshift_install_version }}/openshift-install-linux-{{ openshift_install_version }}.tar.gz
+    openshift_client_tarball_url: >-
+      https://mirror.openshift.com/pub/openshift-v4/clients/ocp/{{ openshift_install_version }}/openshift-client-linux-{{ openshift_install_version }}.tar.gz
+
+- name: Ensure download cache directory exists | openshift_install.setup_clis
+  ansible.builtin.file:
+    path: "{{ openshift_install_version_dir }}"
+    state: directory
+    mode: "0755"
+
+- name: Download openshift-install archive from mirror | openshift_install.setup_clis
+  ansible.builtin.get_url:
+    url: "{{ openshift_install_tarball_url }}"
+    dest: "{{ openshift_install_version_dir }}/{{ openshift_install_tarball }}"
+    mode: "0644"
+
+- name: Unpack openshift-install archive | openshift_install.setup_clis
+  ansible.builtin.unarchive:
+    src: "{{ openshift_install_version_dir }}/{{ openshift_install_tarball }}"
+    dest: "{{ openshift_install_version_dir }}"
+    remote_src: false
+    creates: "{{ openshift_install_version_dir }}/openshift-install"
+
+- name: Install openshift-install binary | openshift_install.setup_clis
+  ansible.builtin.copy:
+    src: "{{ openshift_install_version_dir }}/openshift-install"
+    dest: "{{ openshift_install_binary_path }}"
+    mode: "0755"
+    remote_src: true
+
+- name: Download openshift-client (oc) archive from mirror | openshift_install.setup_clis
+  ansible.builtin.get_url:
+    url: "{{ openshift_client_tarball_url }}"
+    dest: "{{ openshift_install_version_dir }}/{{ openshift_client_tarball }}"
+    mode: "0644"
+
+- name: Unpack openshift-client archive | openshift_install.setup_clis
+  ansible.builtin.unarchive:
+    src: "{{ openshift_install_version_dir }}/{{ openshift_client_tarball }}"
+    dest: "{{ openshift_install_version_dir }}"
+    remote_src: false
+    creates: "{{ openshift_install_version_dir }}/oc"
+
+- name: Install oc binary | openshift_install.setup_clis
+  ansible.builtin.copy:
+    src: "{{ openshift_install_version_dir }}/oc"
+    dest: "{{ openshift_install_oc_binary_path }}"
+    mode: "0755"
+    remote_src: true

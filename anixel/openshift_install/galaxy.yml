@@ -1,0 +1,32 @@
+# SPDX-License-Identifier: MIT-0
+### REQUIRED
+namespace: anixel
+name: openshift_install
+version: 0.1.0
+readme: README.md
+
+authors:
+  - your name <example@domain.com>
+
+### OPTIONAL but strongly recommended
+description: >-
+  Ansible collection scaffolding for OpenShift install automation (playbooks,
+  roles, and supporting content).
+
+license:
+  - GPL-2.0-or-later
+
+license_file: ''
+
+tags:
+  - openshift
+  - cli
+
+dependencies: {}
+
+repository: http://example.com/repository
+documentation: http://docs.example.com
+homepage: http://example.com
+issues: http://example.com/issue/tracker
+
+build_ignore: []

@@ -1,0 +1,12 @@
+# SPDX-License-Identifier: MIT-0
+galaxy_info:
+  author: anixel
+  description: >-
+    Download openshift-install and oc (linux x86_64) from mirror.openshift.com for a given OCP
+    version and install binaries to a configurable path (install-config / cluster flows to follow).
+  license: GPL-2.0-or-later
+  min_ansible_version: "2.14"
+  galaxy_tags:
+    - openshift
+    - cli
+dependencies: []
