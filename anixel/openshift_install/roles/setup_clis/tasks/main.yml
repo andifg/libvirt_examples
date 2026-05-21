@@ -1,5 +1,12 @@
 # SPDX-License-Identifier: MIT-0
 ---
+- name: Require Red Hat family OS
+  ansible.builtin.assert:
+    that:
+      - ansible_os_family == "RedHat"
+    fail_msg: >-
+      This role targets Red Hat family systems only (ansible_os_family: {{ ansible_os_family }}).
+
 - name: Require openshift_install_version | openshift_install.setup_clis
   ansible.builtin.assert:
     that:
@@ -8,6 +15,11 @@
     fail_msg: >-
       Set openshift_install_version to an OCP release directory name (e.g. 4.20.18), matching
       https://mirror.openshift.com/pub/openshift-v4/clients/ocp/<version>/
+
+- name: Install tar for archive extraction | openshift_install.setup_clis
+  ansible.builtin.package:
+    name: tar
+    state: present
 
 - name: Set derived paths (linux x86_64 tarballs) | openshift_install.setup_clis
   ansible.builtin.set_fact:
@@ -35,7 +47,7 @@
   ansible.builtin.unarchive:
     src: "{{ openshift_install_version_dir }}/{{ openshift_install_tarball }}"
     dest: "{{ openshift_install_version_dir }}"
-    remote_src: false
+    remote_src: true
     creates: "{{ openshift_install_version_dir }}/openshift-install"
 
 - name: Install openshift-install binary | openshift_install.setup_clis
@@ -55,7 +67,7 @@
   ansible.builtin.unarchive:
     src: "{{ openshift_install_version_dir }}/{{ openshift_client_tarball }}"
     dest: "{{ openshift_install_version_dir }}"
-    remote_src: false
+    remote_src: true
     creates: "{{ openshift_install_version_dir }}/oc"
 
 - name: Install oc binary | openshift_install.setup_clis
