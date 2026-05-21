@@ -1,0 +1,70 @@
+# SPDX-License-Identifier: MIT-0
+---
+- name: Render install-config.yaml
+  ansible.builtin.template:
+    src: install-config.yaml.j2
+    dest: "{{ openshift_configs_workdir }}/install-config.yaml"
+    mode: "0600"
+
+- name: Set rendered install-config path
+  ansible.builtin.set_fact:
+    openshift_configs_install_config_path: "{{ openshift_configs_workdir }}/install-config.yaml"
+
+- name: Show rendered install-config path
+  ansible.builtin.debug:
+    msg: "Rendered install-config path: {{ openshift_configs_install_config_path }}"
+
+- name: Read rendered install-config
+  ansible.builtin.slurp:
+    src: "{{ openshift_configs_install_config_path }}"
+  register: openshift_configs_install_config_slurp
+
+- name: Set rendered install-config body for display
+  ansible.builtin.set_fact:
+    openshift_configs_install_config_rendered: "{{ openshift_configs_install_config_slurp.content | b64decode }}"
+
+- name: Show rendered install-config contents
+  ansible.builtin.debug:
+    var: openshift_configs_install_config_rendered
+
+- name: Run openshift-install create manifests
+  ansible.builtin.command:
+    argv:
+      - "{{ openshift_configs_install_binary_path }}"
+      - create
+      - manifests
+      - --dir
+      - "{{ openshift_configs_workdir }}"
+    creates: "{{ openshift_configs_workdir }}/manifests"
+
+- name: Run openshift-install create ignition-configs
+  ansible.builtin.command:
+    argv:
+      - "{{ openshift_configs_install_binary_path }}"
+      - create
+      - ignition-configs
+      - --dir
+      - "{{ openshift_configs_workdir }}"
+    creates: "{{ openshift_configs_workdir }}/bootstrap.ign"
+
+- name: Set OpenShift ignition config paths
+  ansible.builtin.set_fact:
+    openshift_configs_bootstrap_ign_path: "{{ openshift_configs_workdir }}/bootstrap.ign"
+    openshift_configs_master_ign_path: "{{ openshift_configs_workdir }}/master.ign"
+    openshift_configs_worker_ign_path: "{{ openshift_configs_workdir }}/worker.ign"
+
+- name: Fetch CoreOS release stream JSON from openshift-install
+  ansible.builtin.command:
+    argv:
+      - "{{ openshift_configs_install_binary_path }}"
+      - coreos
+      - print-stream-json
+  register: openshift_configs_coreos_stream
+  changed_when: false
+
+- name: Set CoreOS qemu qcow2.gz location and sha256 from release stream
+  ansible.builtin.set_fact:
+    openshift_configs_coreos_qcow2_gz_location: "{{ _coreos_stream | community.general.json_query('architectures.x86_64.artifacts.qemu.formats.\"qcow2.gz\".location') }}"
+    openshift_configs_coreos_qcow2_gz_sha256: "{{ _coreos_stream | community.general.json_query('architectures.x86_64.artifacts.qemu.formats.\"qcow2.gz\".sha256') }}"
+  vars:
+    _coreos_stream: "{{ openshift_configs_coreos_stream.stdout | from_json }}"

@@ -1,0 +1,26 @@
+#jinja2: lstrip_blocks: True
+# Managed by Ansible (anixel.openshift_install.openshift_configs) — install-config for openshift-install
+apiVersion: v1
+baseDomain: {{ openshift_configs_base_domain }}
+compute:
+  - hyperthreading: {{ openshift_configs_compute_hyperthreading }}
+    name: {{ openshift_configs_compute_name }}
+    replicas: {{ openshift_configs_compute_replicas }}
+controlPlane:
+  hyperthreading: {{ openshift_configs_control_plane_hyperthreading }}
+  name: {{ openshift_configs_control_plane_name }}
+  replicas: {{ openshift_configs_control_plane_replicas }}
+metadata:
+  name: {{ openshift_configs_cluster_name }}
+networking:
+  clusterNetwork:
+    - cidr: {{ openshift_configs_cluster_network_cidr }}
+      hostPrefix: {{ openshift_configs_cluster_network_host_prefix }}
+  networkType: {{ openshift_configs_network_type }}
+  serviceNetwork:
+    - {{ openshift_configs_service_network_cidr }}
+platform:
+  none: {}
+fips: {% if openshift_configs_fips | bool %}true{% else %}false{% endif %}
+pullSecret: {{ openshift_configs_pull_secret | quote }}
+sshKey: {{ openshift_configs_ssh_public_key | quote }}

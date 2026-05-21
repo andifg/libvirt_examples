@@ -1,0 +1,13 @@
+# SPDX-License-Identifier: MIT-0
+galaxy_info:
+  author: anixel
+  description: >-
+    Renders openshift-install install-config.yaml from a Jinja template; optional follow-on
+    for manifests and ignition assets.
+  license: GPL-2.0-or-later
+  min_ansible_version: "2.14"
+  galaxy_tags:
+    - openshift
+    - config
+dependencies:
+  - community.general
