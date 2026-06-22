@@ -6,11 +6,19 @@
 - name: Undefine all libvirt domains (delete VM disks), remove configured networks
   hosts: all
   become: true
-  vars:
-    # Override if your DNAT target differs.
-    firewalld_mgmt_teardown_to_addr: "{{ haproxy_vm_ip | default('192.168.160.50') }}"
   tasks:
-    - name: Remove firewalld DNAT TCP 80 (if present)
+    - name: Remove all firewalld DNAT forward-ports in public zone | destroy
+      ansible.builtin.include_role:
+        name: firewalld_mgt
+        apply:
+          tags:
+            - destroy
+      vars:
+        firewalld_mgmt_type: destination_nat_purge
+        firewalld_mgmt_zone: public
+      tags: [never, destroy]
+
+    - name: Remove source NAT for OPEN lab bridge hvopen0 (if present) | destroy
       ansible.builtin.include_role:
         name: firewalld_mgt
         apply:
@@ -18,23 +26,25 @@
             - destroy
       vars:
         firewalld_mgmt_mode: absent
-        firewalld_mgmt_type: destination_nat
-        firewalld_mgmt_port: "80"
-        firewalld_mgmt_to_addr: "{{ firewalld_mgmt_teardown_to_addr }}"
+        firewalld_mgmt_type: source_nat
+        firewalld_mgmt_source_nat_interface: hvopen0
+        firewalld_mgmt_source_nat_from_zone: trusted
+        firewalld_mgmt_source_nat_to_zone: public
       tags: [never, destroy]
 
-    # - name: Remove firewalld DNAT TCP 443 (if present)
-    #   ansible.builtin.include_role:
-    #     name: firewalld_mgt
-    #     apply:
-    #       tags:
-    #         - destroy
-    #   vars:
-    #     firewalld_mgmt_mode: absent
-    #     firewalld_mgmt_type: destination_nat
-    #     firewalld_mgmt_port: "443"
-    #     firewalld_mgmt_to_addr: "{{ firewalld_mgmt_teardown_to_addr }}"
-    #   tags: [never, destroy]
+    - name: Remove source NAT for NAT lab bridge hvlab0 (if present) | destroy
+      ansible.builtin.include_role:
+        name: firewalld_mgt
+        apply:
+          tags:
+            - destroy
+      vars:
+        firewalld_mgmt_mode: absent
+        firewalld_mgmt_type: source_nat
+        firewalld_mgmt_source_nat_interface: hvlab0
+        firewalld_mgmt_source_nat_from_zone: trusted
+        firewalld_mgmt_source_nat_to_zone: public
+      tags: [never, destroy]
 
     - name: Tear down libvirt guests and networks
       ansible.builtin.include_role:

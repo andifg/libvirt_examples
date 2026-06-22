@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: MIT-0
 ---
-# Import: cache image → optional bz2 / raw|img → qcow2 → copy to images/vm-<name>.qcow2 → community.libvirt.virt_install.
+# Import: cache image → optional bz2 / gzip / raw|img → qcow2 → copy to images/vm-<name>.qcow2 → community.libvirt.virt_install.
 
 - name: Require import guest variables | libvirt_vm
   ansible.builtin.assert:
@@ -14,10 +14,13 @@
       - libvirt_vm_networks is defined
       - libvirt_vm_networks | length > 0
     fail_msg: >-
-      Set libvirt_vm_name, libvirt_vm_os_name, libvirt_vm_download_url, and a non-empty libvirt_vm_networks list.
+      Set libvirt_vm_name, libvirt_vm_os_name, libvirt_vm_download_url,
+      and a non-empty libvirt_vm_networks list.
 
 - name: Build cloud-init payload for virt_install | libvirt_vm
-  when: libvirt_vm_cloud_init_enabled | bool
+  when:
+    - libvirt_vm_cloud_init_enabled | bool
+    - libvirt_vm_ignition_file_path | length == 0
   ansible.builtin.set_fact:
     libvirt_vm__cloud_init:
       user_data: "{{ libvirt_vm_cloud_init_user_data | default(libvirt_vm_cloud_init_default) }}"
@@ -29,6 +32,7 @@
     dest: "{{ libvirt_vm_image_cache_dir }}/{{ libvirt_vm_download_url | basename }}"
     mode: "0644"
     timeout: "{{ libvirt_vm_qcow2_download_timeout }}"
+    checksum: "{{ 'sha256:' + libvirt_vm_download_checksum_sha256 if libvirt_vm_download_checksum_sha256 | length > 0 else omit }}"
     force: false
 
 - name: Track working file in cache | libvirt_vm
@@ -49,6 +53,22 @@
   when: libvirt_vm__ds_work | regex_search('\.bz2$', ignorecase=True)
   ansible.builtin.set_fact:
     libvirt_vm__ds_work: "{{ libvirt_vm__ds_work | regex_replace('(?i)\\.bz2$', '') }}"
+
+- name: Decompress gzip in cache | libvirt_vm
+  when: libvirt_vm__ds_work | regex_search('\.gz$', ignorecase=True)
+  ansible.builtin.command:
+    argv:
+      - gzip
+      - -d
+      - -f
+      - -k
+      - "{{ libvirt_vm__ds_work }}"
+    creates: "{{ libvirt_vm__ds_work | regex_replace('(?i)\\.gz$', '') }}"
+
+- name: Update path after gzip | libvirt_vm
+  when: libvirt_vm__ds_work | regex_search('\.gz$', ignorecase=True)
+  ansible.builtin.set_fact:
+    libvirt_vm__ds_work: "{{ libvirt_vm__ds_work | regex_replace('(?i)\\.gz$', '') }}"
 
 - name: Convert raw or disk image to qcow2 in cache | libvirt_vm
   when: >-
@@ -89,6 +109,27 @@
     mode: "0644"
     force: false
 
+- name: Stage CoreOS ignition for libvirt fw_cfg | libvirt_vm
+  when: libvirt_vm_ignition_file_path | length > 0
+  block:
+    - name: Copy ignition into libvirt images dir | libvirt_vm
+      ansible.builtin.copy:
+        src: "{{ libvirt_vm_ignition_file_path }}"
+        dest: "{{ libvirt_vm_images_dir }}/vm-{{ libvirt_vm_name }}.ign"
+        mode: "0644"
+        remote_src: true
+
+    - name: Set sysinfo fw_cfg for CoreOS ignition | libvirt_vm
+      ansible.builtin.set_fact:
+        libvirt_vm__sysinfo_fwcfg:
+          type: fwcfg
+          entry0:
+            name: opt/com.coreos/config
+            file: "{{ libvirt_vm_images_dir }}/vm-{{ libvirt_vm_name }}.ign"
+
+# qemu_commandline does not work here: community.libvirt.virt_install passes
+# --qemu-commandline and -fw_cfg as separate argv tokens, so virt-install errors
+# with "expected one argument". Use sysinfo fwcfg instead (same ignition path).
 - name: Create libvirt domain from imported disks | libvirt_vm
   community.libvirt.virt_install:
     name: "{{ libvirt_vm_name }}"
@@ -105,4 +146,5 @@
     serial: "{{ {'value': 'pty'} if libvirt_vm_serial_console_enabled | bool else omit }}"
     autostart: "{{ libvirt_vm_autostart }}"
     networks: "{{ libvirt_vm_networks }}"
-    cloud_init: "{{ libvirt_vm__cloud_init if (libvirt_vm_cloud_init_enabled | bool) else omit }}"
+    cloud_init: "{{ libvirt_vm__cloud_init if (libvirt_vm_cloud_init_enabled | bool and libvirt_vm_ignition_file_path | length == 0) else omit }}"
+    sysinfo: "{{ libvirt_vm__sysinfo_fwcfg | default(omit) }}"

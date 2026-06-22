@@ -13,6 +13,15 @@ libvirt_vm_disk_type: qcow2
 # Fetched artifact: OS image URL (qcow2 | raw | img); installer ISO URL when disk_type is iso. Use img for raw disk images (e.g. OPNsense nano .img/.img.bz2).
 libvirt_vm_download_url: ""
 
+# osinfo name for virt_install (required; set per guest, e.g. centos-stream10, rhel9.6).
+libvirt_vm_os_name: ""
+
+# Optional sha256 (hex) for get_url checksum when downloading libvirt_vm_download_url.
+libvirt_vm_download_checksum_sha256: ""
+
+# RHCOS / CoreOS ignition file; passed via virt_install sysinfo fwcfg (disables cloud-init when set).
+libvirt_vm_ignition_file_path: ""
+
 libvirt_vm_image_cache_dir: /var/lib/libvirt/image-cache
 
 libvirt_vm_images_dir: /var/lib/libvirt/images

@@ -1,0 +1,32 @@
+# SPDX-License-Identifier: MIT-0
+---
+# Remove every permanent forward-port in firewalld_mgmt_zone (destroy / teardown).
+# Does not require matching toaddr — fixes stale DNAT when teardown IP differs from provision.
+
+- name: List permanent forward-ports in zone | firewalld_mgmt
+  ansible.builtin.command:
+    argv:
+      - firewall-cmd
+      - "--zone={{ firewalld_mgmt_zone }}"
+      - --list-forward-ports
+      - --permanent
+  register: firewalld_mgmt__forward_ports_raw
+  changed_when: false
+
+- name: Remove permanent forward-port from zone | firewalld_mgmt
+  ansible.builtin.command:
+    argv:
+      - firewall-cmd
+      - --permanent
+      - "--zone={{ firewalld_mgmt_zone }}"
+      - "--remove-forward-port={{ item }}"
+  loop: "{{ firewalld_mgmt__forward_ports_raw.stdout_lines | select('match', '^port=') | list }}"
+  register: firewalld_mgmt__remove_forward_port
+  changed_when: firewalld_mgmt__remove_forward_port.rc == 0
+  failed_when: false
+
+- name: Reload firewalld after forward-port purge | firewalld_mgmt
+  ansible.builtin.command:
+    argv: [firewall-cmd, --reload]
+  when: firewalld_mgmt__remove_forward_port.results | default([]) | selectattr('rc', 'equalto', 0) | list | length > 0
+  changed_when: true
