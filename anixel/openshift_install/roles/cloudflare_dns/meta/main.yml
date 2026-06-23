@@ -1,0 +1,12 @@
+# SPDX-License-Identifier: MIT-0
+galaxy_info:
+  author: anixel
+  description: >-
+    Manage Cloudflare DNS records for OpenShift install (API, API-int, apps, ingress, etc.).
+  license: GPL-2.0-or-later
+  min_ansible_version: "2.14"
+  galaxy_tags:
+    - openshift
+    - dns
+    - cloudflare
+dependencies: []

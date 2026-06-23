@@ -1,0 +1,29 @@
+# SPDX-License-Identifier: MIT-0
+---
+- name: Require cloudflare_dns_api_token | openshift_install.cloudflare_dns
+  ansible.builtin.assert:
+    that:
+      - cloudflare_dns_api_token is defined
+      - cloudflare_dns_api_token | length > 0
+    fail_msg: Set cloudflare_dns_api_token (Cloudflare API token with Zone:DNS:Edit).
+
+- name: Require cloudflare_dns_zone | openshift_install.cloudflare_dns
+  ansible.builtin.assert:
+    that:
+      - cloudflare_dns_zone is defined
+      - cloudflare_dns_zone | length > 0
+    fail_msg: Set cloudflare_dns_zone (e.g. example.com).
+
+- name: Require cloudflare_dns_cluster_name | openshift_install.cloudflare_dns
+  ansible.builtin.assert:
+    that:
+      - cloudflare_dns_cluster_name is defined
+      - cloudflare_dns_cluster_name | length > 0
+    fail_msg: Set cloudflare_dns_cluster_name (e.g. openshift-prod).
+
+- name: Require cloudflare_dns_target_ip | openshift_install.cloudflare_dns
+  ansible.builtin.assert:
+    that:
+      - cloudflare_dns_target_ip is defined
+      - cloudflare_dns_target_ip | length > 0
+    fail_msg: Set cloudflare_dns_target_ip (hypervisor or load balancer public IP).

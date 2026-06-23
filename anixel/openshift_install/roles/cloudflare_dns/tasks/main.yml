@@ -1,0 +1,15 @@
+# SPDX-License-Identifier: MIT-0
+---
+- name: Asserts | openshift_install.cloudflare_dns
+  ansible.builtin.include_tasks: asserts.yml
+
+- name: Create Cloudflare A records using API token | openshift_install.cloudflare_dns
+  community.general.cloudflare_dns:
+    zone: "{{ cloudflare_dns_zone }}"
+    record: "{{ item }}"
+    type: A
+    value: "{{ cloudflare_dns_target_ip }}"
+    api_token: "{{ cloudflare_dns_api_token }}"
+    proxied: false
+    solo: true
+  loop: "{{ (cloudflare_dns_a_record_names + ['*.' + cloudflare_dns_cluster_name]) | unique }}"

@@ -1,0 +1,19 @@
+# SPDX-License-Identifier: MIT-0
+---
+# Cloudflare API token (Zone:DNS:Edit on the target zone).
+cloudflare_dns_api_token: ""
+
+# Zone name (e.g. example.com).
+cloudflare_dns_zone: ""
+
+# Base domain for the cluster (often same as zone; used with cluster_name for FQDNs).
+cloudflare_dns_base_domain: ""
+
+# Cluster name prefix (e.g. test → test-api.example.com).
+cloudflare_dns_cluster_name: ""
+
+# Hypervisor or load balancer public IP for A records.
+cloudflare_dns_target_ip: ""
+
+# Extra A record names in the zone (wildcard *.{cluster_name} is always added in tasks).
+cloudflare_dns_a_record_names: []
