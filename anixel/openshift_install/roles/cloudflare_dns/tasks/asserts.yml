@@ -14,6 +14,13 @@
       - cloudflare_dns_zone | length > 0
     fail_msg: Set cloudflare_dns_zone (e.g. example.com).
 
+- name: Require cloudflare_dns_base_domain | openshift_install.cloudflare_dns
+  ansible.builtin.assert:
+    that:
+      - cloudflare_dns_base_domain is defined
+      - cloudflare_dns_base_domain | length > 0
+    fail_msg: Set cloudflare_dns_base_domain (e.g. example.com).
+
 - name: Require cloudflare_dns_cluster_name | openshift_install.cloudflare_dns
   ansible.builtin.assert:
     that:

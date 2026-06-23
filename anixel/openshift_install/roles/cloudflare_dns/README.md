@@ -13,9 +13,9 @@ Cloudflare DNS for OpenShift install endpoints (API, `*.apps`, ingress, etc.). S
 |----------|---------|-------------|
 | `cloudflare_dns_api_token` | `""` | **Required.** Cloudflare API token. |
 | `cloudflare_dns_zone` | `""` | **Required.** DNS zone name (e.g. `example.com`). |
-| `cloudflare_dns_base_domain` | `""` | Base domain for cluster FQDNs. |
-| `cloudflare_dns_cluster_name` | `""` | Cluster name segment (e.g. `test`). |
-| `cloudflare_dns_target_ip` | `""` | Public IP for A records (hypervisor / LB). |
+| `cloudflare_dns_base_domain` | `""` | **Required.** Base domain for cluster FQDNs. |
+| `cloudflare_dns_cluster_name` | `""` | **Required.** Cluster name segment (e.g. `openshift-prod`). |
+| `cloudflare_dns_target_ip` | `""` | **Required.** Public IP for A records (hypervisor / LB). |
 
 ## Description
 
