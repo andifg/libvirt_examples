@@ -1,0 +1,44 @@
+---
+description: Ansible role assert tasks — asserts.yml, one assert per required variable
+globs: anixel/**/roles/**/tasks/*.yml
+alwaysApply: false
+---
+
+# Ansible role assert style
+
+Reference: `anixel/openshift_install/roles/cloudflare_dns/tasks/asserts.yml`.
+
+## File layout
+
+- Put all required-variable checks in **`tasks/asserts.yml`** (dedicated file, not inline in task files).
+- Include asserts from each task file that needs them (e.g. `setup_configs.yml`, `wait_for_installation.yml`), or from the playbook via `include_role` + `tasks_from`.
+
+## One assert per variable
+
+- **One task per required variable** — do not combine multiple vars in a single `assert` `that:` list.
+- Task name: `Require <var_name> | <collection>.<role>` (e.g. `Require cloudflare_dns_api_token | openshift_install.cloudflare_dns`).
+
+## Assert task shape
+
+```yaml
+- name: Require my_role_foo | collection.my_role
+  ansible.builtin.assert:
+    that:
+      - my_role_foo is defined
+      - my_role_foo | length > 0
+    fail_msg: Set my_role_foo (short hint or example).
+```
+
+- Use `is defined` plus non-empty check (`| length > 0` for strings/lists).
+- **`fail_msg`** names only the **one** variable that failed and gives a brief hint.
+- For booleans/enums, adjust `that:` (e.g. `in [...]`) but keep **one variable per task**.
+
+## When to assert
+
+- Assert variables the role **cannot** sensibly default (secrets, paths, cluster names, API tokens).
+- Optional vars with safe defaults in `defaults/main.yml` do not need asserts.
+
+## Do not
+
+- Merge all required vars into one assert with a long combined `fail_msg`.
+- Put assert blocks in `main.yml` when the role has more than a trivial check — use `asserts.yml` and include it from the relevant task file.

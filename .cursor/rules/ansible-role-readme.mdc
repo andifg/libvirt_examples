@@ -1,0 +1,48 @@
+---
+description: Target outline for Ansible role README.md files in anixel collections
+globs: anixel/**/roles/**/README.md
+alwaysApply: false
+---
+
+# Ansible role README outline
+
+Use this structure for every role under `anixel/*/roles/<role_name>/README.md`. Reference: `anixel/openshift_install/roles/cloudflare_dns/README.md`.
+
+## Sections (in order)
+
+### 1. Title
+
+- Single `#` heading: the **role name** only (e.g. `# cloudflare_dns`), not the FQCN.
+
+### 2. Summary
+
+- One short paragraph: what the role does and who it is for.
+- State scope honestly (e.g. “scaffold only” if not fully implemented).
+
+### 3. `## Requirements`
+
+- Bullet list of **external** prerequisites:
+  - Ansible collections (with module names if relevant)
+  - Packages, binaries, or hypervisor tools on the target
+  - Credentials, permissions, or API scopes
+
+### 4. `## Variables`
+
+- Markdown table with exactly these columns:
+
+| Variable | Default | Description |
+
+- One row per public variable from `defaults/main.yml`.
+- Mark **Required.** in the Description column when the role asserts or cannot run without it.
+- Use backticks for variable names and example values (e.g. `example.com`, `""`).
+
+### 5. `## Description`
+
+- What the role **does at runtime**: main tasks, resources created/changed, loops, idempotency notes.
+- Mention important defaults, naming patterns, or how to extend behavior (extra vars, `tasks/` includes).
+
+## Style
+
+- Concise; no duplicate of every default in prose if the table already lists them.
+- Prefer full collection name in Requirements (e.g. `community.general`), role name only in the title.
+- Do not document private `_*` or internal-only facts unless maintainers need them.
