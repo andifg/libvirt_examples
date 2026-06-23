@@ -1,0 +1,26 @@
+# SPDX-License-Identifier: MIT-0
+---
+# RHCOS qemu qcow2.gz (set in playbook from openshift_configs facts, or override in inventory).
+openshift_libvirt_coreos_qcow2_gz_location: ""
+openshift_libvirt_coreos_qcow2_gz_sha256: ""
+
+# Ignition file paths on the bastion (set in playbook from openshift_configs facts, or override).
+openshift_libvirt_bootstrap_ign_path: ""
+openshift_libvirt_master_ign_path: ""
+openshift_libvirt_worker_ign_path: ""
+
+# HAProxy VM password (set in inventory; see tasks/haproxy.yml cloud-init).
+openshift_libvirt_haproxy_vm_password: ""
+
+# HAProxy backends (templates/haproxy.cfg.j2); align cluster/base domain and node counts with install-config.
+openshift_libvirt_cluster_name: ""
+openshift_libvirt_base_domain: ""
+
+openshift_libvirt_master_nodes: 3
+openshift_libvirt_worker_nodes: 0
+
+# Bootstrap VM (RHCOS + bootstrap.ign; tasks/nodes.yml; libvirt domain name is always bootstrap).
+openshift_libvirt_bootstrap_vm:
+  memory: 16384
+  vcpus: 4
+  os_name: rhel9.6

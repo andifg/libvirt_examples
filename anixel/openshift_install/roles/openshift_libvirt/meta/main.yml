@@ -1,0 +1,12 @@
+# SPDX-License-Identifier: MIT-0
+galaxy_info:
+  author: anixel
+  description: >-
+    Provision OpenShift bootstrap / control-plane / worker VMs on libvirt using
+    ignition configs and the RHCOS qemu qcow2.gz image from the release stream.
+  license: GPL-2.0-or-later
+  min_ansible_version: "2.14"
+  galaxy_tags:
+    - openshift
+    - libvirt
+dependencies: []

@@ -1,0 +1,29 @@
+#cloud-config
+users:
+  - default
+  - name: {{ openshift_libvirt_haproxy_vm_user }}
+    plain_text_passwd: {{ openshift_libvirt_haproxy_vm_password }}
+    lock_passwd: false
+    groups: wheel
+    sudo: ALL=(ALL) NOPASSWD:ALL
+ssh_pwauth: true
+package_update: true
+packages:
+  - firewalld
+  - haproxy
+  - policycoreutils-python-utils
+write_files:
+  # After haproxy RPM so defaults exist; avoids losing our cfg to package ordering on some images.
+  - path: /etc/haproxy/haproxy.cfg
+    defer: true
+    permissions: "0644"
+    content: |
+{{ lookup('ansible.builtin.template', 'haproxy.cfg.j2') | indent(6, first=True) }}
+runcmd:
+  - [systemctl, enable, "--now", firewalld]
+  - [firewall-cmd, --permanent, --add-port=6443/tcp, --add-port=22623/tcp, --add-service=http, --add-service=https]
+  - [firewall-cmd, --reload]
+  # HAProxy binds 6443/22623; SELinux only allows http_port_t by default (not firewalld).
+  - [bash, -c, "for p in 6443 22623; do semanage port -a -t http_port_t -p tcp $p 2>/dev/null || semanage port -m -t http_port_t -p tcp $p; done"]
+  - [setsebool, -P, haproxy_connect_any, "1"]
+  - [systemctl, enable, "--now", haproxy]

@@ -1,0 +1,20 @@
+# SPDX-License-Identifier: MIT-0
+---
+- name: Provision RHCOS bootstrap VM | openshift_install.openshift_libvirt
+  ansible.builtin.include_role:
+    name: anixel.libvirt.libvirt_vm
+  vars:
+    libvirt_vm_image_cache_dir: "{{ openshift_libvirt_image_cache_dir }}"
+    libvirt_vm_images_dir: "{{ openshift_libvirt_images_dir }}"
+    libvirt_vm_qcow2_download_timeout: 3600
+    libvirt_vm_name: bootstrap
+    libvirt_vm_os_name: "{{ openshift_libvirt_bootstrap_vm.os_name }}"
+    libvirt_vm_disk_type: qcow2
+    libvirt_vm_download_url: "{{ openshift_libvirt_coreos_qcow2_gz_location }}"
+    libvirt_vm_download_checksum_sha256: "{{ openshift_libvirt_coreos_qcow2_gz_sha256 }}"
+    libvirt_vm_memory: "{{ openshift_libvirt_bootstrap_vm.memory }}"
+    libvirt_vm_vcpus: "{{ openshift_libvirt_bootstrap_vm.vcpus }}"
+    libvirt_vm_ignition_file_path: "{{ openshift_libvirt_bootstrap_ign_path }}"
+    libvirt_vm_cloud_init_enabled: false
+    libvirt_vm_networks:
+      - network: "{{ openshift_libvirt_network_name }}"

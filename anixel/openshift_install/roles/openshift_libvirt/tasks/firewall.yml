@@ -1,0 +1,24 @@
+# SPDX-License-Identifier: MIT-0
+---
+- name: Enable source NAT for libvirt lab interface on hypervisor | openshift_install.openshift_libvirt
+  ansible.builtin.include_role:
+    name: anixel.libvirt.firewalld_mgt
+  vars:
+    firewalld_mgmt_type: source_nat
+    firewalld_mgmt_source_nat_interface: "{{ openshift_libvirt_firewall_source_nat_interface }}"
+    firewalld_mgmt_source_nat_from_zone: "{{ openshift_libvirt_firewall_source_nat_from_zone }}"
+    firewalld_mgmt_source_nat_to_zone: "{{ openshift_libvirt_firewall_source_nat_to_zone }}"
+
+- name: DNAT hypervisor TCP to load balancer guest (firewalld public zone) | openshift_install.openshift_libvirt
+  ansible.builtin.include_role:
+    name: anixel.libvirt.firewalld_mgt
+  vars:
+    firewalld_mgmt_type: destination_nat
+    firewalld_mgmt_port: "{{ item }}"
+    firewalld_mgmt_to_addr: "{{ openshift_libvirt_loadbalancer_ip }}"
+  loop:
+    - "80"
+    - "443"
+    - "22623"
+    - "6443"
+  when: openshift_libvirt_loadbalancer_ip | length > 0

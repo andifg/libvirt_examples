@@ -1,0 +1,19 @@
+# SPDX-License-Identifier: MIT-0
+---
+- name: Provision CentOS Stream HAProxy VM | openshift_install.openshift_libvirt
+  ansible.builtin.include_role:
+    name: anixel.libvirt.libvirt_vm
+  vars:
+    libvirt_vm_image_cache_dir: "{{ openshift_libvirt_image_cache_dir }}"
+    libvirt_vm_images_dir: "{{ openshift_libvirt_images_dir }}"
+    libvirt_vm_qcow2_download_timeout: 3600
+    libvirt_vm_name: "{{ openshift_libvirt_haproxy_vm_name }}"
+    libvirt_vm_disk_type: qcow2
+    libvirt_vm_download_url: "{{ openshift_libvirt_haproxy_vm_download_url }}"
+    libvirt_vm_os_name: "{{ openshift_libvirt_haproxy_vm_os_name }}"
+    libvirt_vm_networks:
+      - network: "{{ openshift_libvirt_network_name }}"
+        mac:
+          address: "{{ openshift_libvirt_haproxy_vm_mac }}"
+    libvirt_vm_cloud_init_disable: false
+    libvirt_vm_cloud_init_user_data: "{{ lookup('ansible.builtin.template', 'haproxy-cloud-init.yml.j2') }}"

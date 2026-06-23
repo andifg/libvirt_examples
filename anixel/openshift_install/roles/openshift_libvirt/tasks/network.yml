@@ -1,0 +1,54 @@
+# SPDX-License-Identifier: MIT-0
+---
+- name: Init DHCP host list with load balancer | openshift_install.openshift_libvirt
+  ansible.builtin.set_fact:
+    openshift_libvirt_network_dhcp_hosts:
+      - ip: "{{ openshift_libvirt_loadbalancer_ip }}"
+
+- name: Add master node DHCP reservations | openshift_install.openshift_libvirt
+  ansible.builtin.set_fact:
+    openshift_libvirt_network_dhcp_hosts: >-
+      {{
+        openshift_libvirt_network_dhcp_hosts + [{
+          'ip': openshift_libvirt_network_dhcp_range_start.rsplit('.', 1)[0]
+            ~ '.'
+            ~ ((openshift_libvirt_network_dhcp_range_start.rsplit('.', 1)[1] | int) + (item | int) + 1),
+          'name': 'master-' ~ item ~ '.' ~ openshift_libvirt_cluster_domain,
+        }]
+      }}
+  loop: "{{ range(0, openshift_libvirt_master_nodes | int) | list }}"
+
+- name: Add worker node DHCP reservations | openshift_install.openshift_libvirt
+  ansible.builtin.set_fact:
+    openshift_libvirt_network_dhcp_hosts: >-
+      {{
+        openshift_libvirt_network_dhcp_hosts + [{
+          'ip': openshift_libvirt_network_dhcp_range_start.rsplit('.', 1)[0]
+            ~ '.'
+            ~ ((openshift_libvirt_network_dhcp_range_start.rsplit('.', 1)[1] | int) + (openshift_libvirt_master_nodes | int) + (item | int) + 1),
+          'name': 'compute-' ~ item ~ '.' ~ openshift_libvirt_cluster_domain,
+        }]
+      }}
+  loop: "{{ range(0, openshift_libvirt_worker_nodes | int) | list }}"
+
+- name: Show libvirt DHCP host reservations | openshift_install.openshift_libvirt
+  ansible.builtin.debug:
+    var: openshift_libvirt_network_dhcp_hosts
+
+- name: Define OpenShift libvirt network | openshift_install.openshift_libvirt
+  ansible.builtin.include_role:
+    name: anixel.libvirt.libvirt_network
+  vars:
+    libvirt_network_type: "{{ openshift_libvirt_network_type }}"
+    libvirt_network_name: "{{ openshift_libvirt_network_name }}"
+    libvirt_network_bridge: "{{ openshift_libvirt_network_bridge }}"
+    libvirt_network_forward_mode: "{{ openshift_libvirt_network_forward_mode }}"
+    libvirt_network_ip_address: "{{ openshift_libvirt_network_ip_address }}"
+    libvirt_network_ip_netmask: "{{ openshift_libvirt_network_ip_netmask }}"
+    libvirt_network_dhcp_enabled: "{{ openshift_libvirt_network_dhcp_enabled }}"
+    libvirt_network_dhcp_range_start: "{{ openshift_libvirt_network_dhcp_range_start }}"
+    libvirt_network_dhcp_range_end: "{{ openshift_libvirt_network_dhcp_range_end }}"
+    libvirt_network_dhcp_hosts: "{{ openshift_libvirt_network_dhcp_hosts }}"
+    libvirt_network_ipv6_enabled: "{{ openshift_libvirt_network_ipv6_enabled }}"
+    libvirt_network_ipv6_address: "{{ openshift_libvirt_network_ipv6_address }}"
+    libvirt_network_ipv6_prefix: "{{ openshift_libvirt_network_ipv6_prefix }}"

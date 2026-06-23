@@ -1,0 +1,34 @@
+# SPDX-License-Identifier: MIT-0
+---
+# libvirt_vm paths (tasks/haproxy.yml, tasks/nodes.yml).
+openshift_libvirt_image_cache_dir: /var/lib/libvirt/image-cache
+openshift_libvirt_images_dir: /var/lib/libvirt/images
+
+# libvirt_network (OPEN + hypervisor source NAT in tasks/firewall.yml).
+openshift_libvirt_network_type: open
+openshift_libvirt_network_name: openshift
+openshift_libvirt_network_bridge: osbr0
+openshift_libvirt_network_forward_mode: open
+openshift_libvirt_network_ip_address: 192.168.150.1
+openshift_libvirt_network_ip_netmask: 255.255.255.0
+openshift_libvirt_network_dhcp_enabled: true
+openshift_libvirt_network_dhcp_range_start: 192.168.150.2
+openshift_libvirt_network_dhcp_range_end: 192.168.150.254
+# HAProxy guest IP: first address in the lab DHCP range (static reservation below).
+openshift_libvirt_loadbalancer_ip: "{{ openshift_libvirt_network_dhcp_range_start }}"
+openshift_libvirt_cluster_domain: "{{ openshift_libvirt_cluster_name }}.{{ openshift_libvirt_base_domain }}"
+openshift_libvirt_network_ipv6_enabled: false
+openshift_libvirt_network_ipv6_address: 2001:db8:ca2:2::1
+openshift_libvirt_network_ipv6_prefix: "64"
+
+# HAProxy VM (CentOS Stream + cloud-init; see tasks/haproxy.yml).
+openshift_libvirt_haproxy_vm_name: centos-haproxy-open-vm
+openshift_libvirt_haproxy_vm_mac: "52:54:00:ab:cd:21"
+openshift_libvirt_haproxy_vm_download_url: https://cloud.centos.org/centos/10-stream/x86_64/images/CentOS-Stream-GenericCloud-x86_64-10-latest.x86_64.qcow2
+openshift_libvirt_haproxy_vm_os_name: centos-stream10
+openshift_libvirt_haproxy_vm_user: cockpit
+
+# firewalld_mgt source NAT (required for OPEN libvirt forward; tasks/firewall.yml).
+openshift_libvirt_firewall_source_nat_interface: "{{ openshift_libvirt_network_bridge }}"
+openshift_libvirt_firewall_source_nat_from_zone: trusted
+openshift_libvirt_firewall_source_nat_to_zone: public
