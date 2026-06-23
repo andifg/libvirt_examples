@@ -21,6 +21,6 @@ networking:
     - {{ openshift_configs_service_network_cidr }}
 platform:
   none: {}
-fips: {% if openshift_configs_fips | bool %}true{% else %}false{% endif %}
+fips: {{ openshift_configs_fips }}
 pullSecret: {{ openshift_configs_pull_secret | quote }}
 sshKey: {{ openshift_configs_ssh_public_key | quote }}

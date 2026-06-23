@@ -1,0 +1,24 @@
+# SPDX-License-Identifier: MIT-0
+---
+# openshift-install binary (same path as anixel.openshift_install.setup_clis).
+openshift_configs_install_binary_path: /usr/local/bin/openshift-install
+
+# install-config.yaml compute pool (templates/install-config.yaml.j2).
+openshift_configs_compute_hyperthreading: Enabled
+openshift_configs_compute_name: worker
+
+# install-config.yaml control plane (templates/install-config.yaml.j2).
+openshift_configs_control_plane_hyperthreading: Enabled
+openshift_configs_control_plane_name: master
+
+# install-config.yaml networking (templates/install-config.yaml.j2).
+openshift_configs_cluster_network_cidr: 10.128.0.0/14
+openshift_configs_cluster_network_host_prefix: 23
+openshift_configs_network_type: OVNKubernetes
+openshift_configs_service_network_cidr: 172.30.0.0/16
+
+# install-config.yaml (templates/install-config.yaml.j2).
+openshift_configs_fips: false
+
+# openshift-install wait-for install-complete (tasks/wait_for_installation.yml).
+openshift_configs_wait_for_log_level: info

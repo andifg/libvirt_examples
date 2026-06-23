@@ -1,5 +1,8 @@
 # SPDX-License-Identifier: MIT-0
 ---
+- name: asserts | openshift_install.openshift_configs
+  ansible.builtin.include_tasks: asserts.yml
+
 - name: Render install-config.yaml
   ansible.builtin.template:
     src: install-config.yaml.j2
@@ -64,7 +67,16 @@
 
 - name: Set CoreOS qemu qcow2.gz location and sha256 from release stream
   ansible.builtin.set_fact:
-    openshift_configs_coreos_qcow2_gz_location: "{{ _coreos_stream | community.general.json_query('architectures.x86_64.artifacts.qemu.formats.\"qcow2.gz\".location') }}"
-    openshift_configs_coreos_qcow2_gz_sha256: "{{ _coreos_stream | community.general.json_query('architectures.x86_64.artifacts.qemu.formats.\"qcow2.gz\".sha256') }}"
+    openshift_configs_coreos_qcow2_gz_location: "{{ _coreos_stream | community.general.json_query('architectures.x86_64.artifacts.qemu.formats.\"qcow2.gz\".disk.location') }}"
+    openshift_configs_coreos_qcow2_gz_sha256: "{{ _coreos_stream | community.general.json_query('architectures.x86_64.artifacts.qemu.formats.\"qcow2.gz\".disk.sha256') }}"
   vars:
     _coreos_stream: "{{ openshift_configs_coreos_stream.stdout | from_json }}"
+
+- name: Require CoreOS qemu qcow2.gz metadata from release stream
+  ansible.builtin.assert:
+    that:
+      - openshift_configs_coreos_qcow2_gz_location | string | length > 0
+      - openshift_configs_coreos_qcow2_gz_sha256 | string | length > 0
+    fail_msg: >-
+      openshift-install coreos print-stream-json did not yield qemu qcow2.gz disk.location/sha256.
+      Check openshift_configs_install_binary_path and the release stream JSON.

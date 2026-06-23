@@ -3,27 +3,13 @@
 # When set, the role can render templates/install-config.yaml.j2 to this directory.
 openshift_configs_workdir: ""
 
-# openshift-install binary (same path as anixel.openshift_install.setup_clis).
-openshift_configs_install_binary_path: /usr/local/bin/openshift-install
-
 # --- install-config.yaml (see templates/install-config.yaml.j2) ---
-openshift_configs_base_domain: example.com
-openshift_configs_cluster_name: test
+openshift_configs_base_domain: ""
+openshift_configs_cluster_name: ""
 
-openshift_configs_compute_hyperthreading: Enabled
-openshift_configs_compute_name: worker
 openshift_configs_compute_replicas: 0
 
-openshift_configs_control_plane_hyperthreading: Enabled
-openshift_configs_control_plane_name: master
 openshift_configs_control_plane_replicas: 3
-
-openshift_configs_cluster_network_cidr: 10.128.0.0/14
-openshift_configs_cluster_network_host_prefix: 23
-openshift_configs_network_type: OVNKubernetes
-openshift_configs_service_network_cidr: 172.30.0.0/16
-
-openshift_configs_fips: false
 
 # JSON string for pullSecret (same content as ~/.docker/config.json or registry pull secret).
 openshift_configs_pull_secret: ""

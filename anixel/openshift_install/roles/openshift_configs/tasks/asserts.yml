@@ -1,0 +1,36 @@
+# SPDX-License-Identifier: MIT-0
+---
+- name: Require openshift_configs_workdir | openshift_install.openshift_configs
+  ansible.builtin.assert:
+    that:
+      - openshift_configs_workdir is defined
+      - openshift_configs_workdir | length > 0
+    fail_msg: Set openshift_configs_workdir (e.g. /var/lib/openshift-install).
+
+- name: Require openshift_configs_base_domain | openshift_install.openshift_configs
+  ansible.builtin.assert:
+    that:
+      - openshift_configs_base_domain is defined
+      - openshift_configs_base_domain | length > 0
+    fail_msg: Set openshift_configs_base_domain (e.g. example.com).
+
+- name: Require openshift_configs_cluster_name | openshift_install.openshift_configs
+  ansible.builtin.assert:
+    that:
+      - openshift_configs_cluster_name is defined
+      - openshift_configs_cluster_name | length > 0
+    fail_msg: Set openshift_configs_cluster_name (e.g. openshift-prod).
+
+- name: Require openshift_configs_pull_secret | openshift_install.openshift_configs
+  ansible.builtin.assert:
+    that:
+      - openshift_configs_pull_secret is defined
+      - openshift_configs_pull_secret | length > 0
+    fail_msg: Set openshift_configs_pull_secret (JSON pull secret string).
+
+- name: Require openshift_configs_ssh_public_key | openshift_install.openshift_configs
+  ansible.builtin.assert:
+    that:
+      - openshift_configs_ssh_public_key is defined
+      - openshift_configs_ssh_public_key | length > 0
+    fail_msg: Set openshift_configs_ssh_public_key (SSH public key for the core user).

@@ -1,42 +1,29 @@
 # openshift_configs
 
-Install configuration for OpenShift: renders **`install-config.yaml`** from `templates/install-config.yaml.j2` into **`openshift_configs_workdir`**, using variables in `defaults/main.yml`.
+Renders OpenShift **`install-config.yaml`**, runs **`openshift-install`** to produce ignition configs and CoreOS image metadata on the bastion. Pair with **`anixel.openshift_install.setup_clis`** in the same play.
 
-Pair with **`anixel.openshift_install.setup_clis`** for `openshift-install` and `oc` on the bastion.
+## Requirements
 
-## Use in a playbook
+- Collection **`community.general`** (`community.general.json_query` for CoreOS release stream parsing).
+- **`openshift-install`** on the bastion (from **`anixel.openshift_install.setup_clis`**; path in `vars/main.yml`).
+- Inventory: cluster name, base domain, pull secret, SSH public key, and assets workdir.
 
-```yaml
----
-- hosts: bastion
-  become: true
-  roles:
-    - role: anixel.openshift_install.openshift_configs
-      vars:
-        openshift_configs_workdir: /var/lib/openshift-install
-        openshift_configs_pull_secret: "{{ lookup('file', '/path/to/pull-secret') }}"
-        openshift_configs_ssh_public_key: "{{ lookup('file', '/path/to/id_ed25519.pub') }}"
-```
-
-## Variables (install-config)
+## Variables
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `openshift_configs_workdir` | `""` | **Required.** Directory where `install-config.yaml` is written. |
-| `openshift_configs_base_domain` | `example.com` | `baseDomain` |
-| `openshift_configs_cluster_name` | `test` | `metadata.name` |
-| `openshift_configs_compute_*` | see `defaults/main.yml` | First compute pool |
-| `openshift_configs_control_plane_*` | see `defaults/main.yml` | Control plane |
-| `openshift_configs_cluster_network_cidr` | `10.128.0.0/14` | Cluster pod CIDR |
-| `openshift_configs_cluster_network_host_prefix` | `23` | `hostPrefix` |
-| `openshift_configs_network_type` | `OVNKubernetes` | CNI |
-| `openshift_configs_service_network_cidr` | `172.30.0.0/16` | Service CIDR |
-| `openshift_configs_fips` | `false` | FIPS mode |
-| `openshift_configs_pull_secret` | `""` | **Required when rendering.** JSON string for `pullSecret`. |
-| `openshift_configs_ssh_public_key` | `""` | **Required when rendering.** SSH public key for core user. |
+| `openshift_configs_workdir` | `""` | **Required.** Directory for `install-config.yaml`, manifests, and ignition files. |
+| `openshift_configs_base_domain` | `""` | **Required.** `baseDomain` in install-config. |
+| `openshift_configs_cluster_name` | `""` | **Required.** `metadata.name` in install-config. |
+| `openshift_configs_compute_replicas` | `0` | Worker pool `replicas`. |
+| `openshift_configs_control_plane_replicas` | `3` | Control plane `replicas`. |
+| `openshift_configs_pull_secret` | `""` | **Required.** JSON string for `pullSecret`. |
+| `openshift_configs_ssh_public_key` | `""` | **Required.** SSH public key for the `core` user. |
 
-`platform` is fixed to **`none: {}`** in the template (bare-metal / UPI-style). Extend the template if you need another platform block.
+## Description
 
-## Template
+- **`tasks/setup_configs.yml`** — render install-config, create ignition configs, and resolve the RHCOS image URL for libvirt.
+- **`tasks/wait_for_installation.yml`** — wait until the cluster install completes.
+- **`tasks/asserts.yml`** — validate required inventory variables (included by the task files above).
 
-Source: `templates/install-config.yaml.j2` → `{{ openshift_configs_workdir }}/install-config.yaml`.
+Fixed install-config defaults (networking, pool names, FIPS, binary path) live in **`vars/main.yml`**.
