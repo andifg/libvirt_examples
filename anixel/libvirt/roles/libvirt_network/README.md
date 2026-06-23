@@ -13,4 +13,4 @@ Guest **`virsh dumpxml`** only shows `<source network='…' bridge='…'/>` for 
 
 ## Static DHCP reservations
 
-When **`libvirt_network_dhcp_enabled`** is true and the network is not **`isolated`**, set **`libvirt_network_dhcp_hosts`** to a list of **`{ mac: "52:54:…", ip: "192.168.x.y" }`** entries. These become **`<host mac=… ip=…/>`** elements inside **`<dhcp>`** next to **`<range>`**. Match each **`mac`** to a guest NIC (**`libvirt_vm_networks`** with the same **`mac`** string on **`libvirt_vm`**).
+When **`libvirt_network_dhcp_enabled`** is true and the network is not **`isolated`**, set **`libvirt_network_dhcp_hosts`** to a list of objects with any of **`mac`**, **`name`**, or **`ip`** (each optional; omit keys or use empty strings to skip an attribute). These become **`<host/>`** elements inside **`<dhcp>`** next to **`<range>`**. Entries with none of the three set are skipped. Match each **`mac`** to a guest NIC (**`libvirt_vm_networks`** with the same **`mac`** string on **`libvirt_vm`**). Optional **`name`** is the DNS hostname libvirt dnsmasq serves for that reservation.

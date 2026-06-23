@@ -7,11 +7,19 @@
     fail_msg: >-
       This role targets Red Hat family systems only (ansible_os_family: {{ ansible_os_family }}).
 
+- name: Render libvirt network XML | libvirt_network
+  ansible.builtin.set_fact:
+    libvirt_network_xml: "{{ lookup('ansible.builtin.template', 'network.xml.j2') }}"
+
+- name: Show libvirt network XML | libvirt_network
+  ansible.builtin.debug:
+    var: libvirt_network_xml
+
 - name: Define libvirt network | libvirt_network
   community.libvirt.virt_net:
     command: define
     name: "{{ libvirt_network_name }}"
-    xml: "{{ lookup('ansible.builtin.template', 'network.xml.j2') }}"
+    xml: "{{ libvirt_network_xml }}"
 
 - name: Start libvirt network | libvirt_network
   community.libvirt.virt_net:
