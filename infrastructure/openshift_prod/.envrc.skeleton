@@ -1,0 +1,5 @@
+# Copy to .envrc and adjust: cp .envrc.skeleton .envrc
+# Loaded by direnv when you `cd` here, or: source .envrc
+export LIBVIRT_ANSIBLE_HOST=your.hypervisor.example
+export LIBVIRT_ANSIBLE_USER=root
+export LIBVIRT_ANSIBLE_SSH_KEY="~/.ssh/id_ed25519"

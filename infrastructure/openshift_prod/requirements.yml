@@ -1,6 +1,8 @@
 ---
 collections:
-- name: ../../anixel/libvirt_examples
+- name: ../../anixel/openshift_install
+  type: dir
+- name: ../../anixel/libvirt
   type: dir
 - name: ansible.posix
 - name: community.libvirt
