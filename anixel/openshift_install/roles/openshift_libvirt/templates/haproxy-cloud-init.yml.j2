@@ -1,4 +1,6 @@
 #cloud-config
+hostname: haproxy
+fqdn: haproxy.{{ openshift_libvirt_cluster_domain }}
 users:
   - default
   - name: {{ openshift_libvirt_haproxy_vm_user }}
@@ -20,10 +22,13 @@ write_files:
     content: |
 {{ lookup('ansible.builtin.template', 'haproxy.cfg.j2') | indent(6, first=True) }}
 runcmd:
+  # Permanent rules before starting firewalld (no daemon race on first boot).
+  - [firewall-offline-cmd, --add-port=6443/tcp]
+  - [firewall-offline-cmd, --add-port=22623/tcp]
+  - [firewall-offline-cmd, --add-service=http]
+  - [firewall-offline-cmd, --add-service=https]
   - [systemctl, enable, "--now", firewalld]
-  - [firewall-cmd, --permanent, --add-port=6443/tcp, --add-port=22623/tcp, --add-service=http, --add-service=https]
-  - [firewall-cmd, --reload]
-  # HAProxy binds 6443/22623; SELinux only allows http_port_t by default (not firewalld).
+  # HAProxy binds 6443/22623; SELinux only allows http_port_t by default
   - [bash, -c, "for p in 6443 22623; do semanage port -a -t http_port_t -p tcp $p 2>/dev/null || semanage port -m -t http_port_t -p tcp $p; done"]
   - [setsebool, -P, haproxy_connect_any, "1"]
   - [systemctl, enable, "--now", haproxy]

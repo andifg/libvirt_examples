@@ -13,8 +13,7 @@ libvirt_network_ip_netmask: 255.255.255.0
 libvirt_network_dhcp_enabled: true
 libvirt_network_dhcp_range_start: 192.168.150.2
 libvirt_network_dhcp_range_end: 192.168.150.254
-# Static reservations inside <dhcp> (<host mac=… ip=…/>). Requires libvirt_network_dhcp_enabled and a non-isolated network.
-# Each item: mac, ip (required for libvirt <host/>).
+# libvirt_network_dhcp_hosts items: mac, ip (DHCP lease); optional hostname + ip → <dns> entry in network.xml.j2.
 libvirt_network_dhcp_hosts: []
 libvirt_network_ipv6_enabled: false
 libvirt_network_ipv6_address: 2001:db8:ca2:2::1

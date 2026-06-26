@@ -18,13 +18,28 @@
   <forward mode="{{ libvirt_network_forward_mode }}"/>
 {% endif %}
   <bridge name="{{ libvirt_network_bridge }}" stp="on" delay="0"/>
+{% set _dns = namespace(open=false) %}
+{% for h in libvirt_network_dhcp_hosts | default([]) %}
+{% if h.get('hostname') and h.get('ip') %}
+{% if not _dns.open %}
+  <dns>
+{% set _dns.open = true %}
+{% endif %}
+    <host ip="{{ h.get('ip') }}">
+      <hostname>{{ h.get('hostname') }}</hostname>
+    </host>
+{% endif %}
+{% endfor %}
+{% if _dns.open %}
+  </dns>
+{% endif %}
   <ip address="{{ libvirt_network_ip_address }}" netmask="{{ libvirt_network_ip_netmask }}">
 {% if libvirt_network_dhcp_enabled %}
     <dhcp>
       <range start="{{ libvirt_network_dhcp_range_start }}" end="{{ libvirt_network_dhcp_range_end }}"/>
 {% for h in libvirt_network_dhcp_hosts | default([]) %}
-{% if h.mac or h.name or h.ip %}
-      <host{%- if h.mac %} mac="{{ h.mac }}"{%- endif -%}{%- if h.name %} name="{{ h.name }}"{%- endif -%}{%- if h.ip %} ip="{{ h.ip }}"{%- endif %}/>
+{% if h.get('mac') or h.get('ip') %}
+      <host{%- if h.get('mac') %} mac="{{ h.get('mac') }}"{%- endif -%}{%- if h.get('ip') %} ip="{{ h.get('ip') }}"{%- endif %}/>
 {% endif %}
 {% endfor %}
     </dhcp>

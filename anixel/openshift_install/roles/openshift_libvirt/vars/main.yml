@@ -22,8 +22,12 @@ openshift_libvirt_network_ipv6_address: 2001:db8:ca2:2::1
 openshift_libvirt_network_ipv6_prefix: "64"
 
 # HAProxy VM (CentOS Stream + cloud-init; see tasks/haproxy.yml).
-openshift_libvirt_haproxy_vm_name: centos-haproxy-open-vm
+openshift_libvirt_haproxy_vm_name: haproxy
 openshift_libvirt_haproxy_vm_mac: "52:54:00:ab:cd:21"
+openshift_libvirt_bootstrap_vm_mac: "52:54:00:ab:cd:20"
+# QEMU/KVM locally administered MAC prefixes for master/worker static DHCP (tasks/network.yml).
+openshift_libvirt_master_node_mac_prefix: "52:54:00:ab:ce"
+openshift_libvirt_worker_node_mac_prefix: "52:54:00:ab:cf"
 openshift_libvirt_haproxy_vm_download_url: https://cloud.centos.org/centos/10-stream/x86_64/images/CentOS-Stream-GenericCloud-x86_64-10-latest.x86_64.qcow2
 openshift_libvirt_haproxy_vm_os_name: centos-stream10
 openshift_libvirt_haproxy_vm_user: cockpit
@@ -32,4 +36,3 @@ openshift_libvirt_haproxy_vm_user: cockpit
 openshift_libvirt_firewall_source_nat_interface: "{{ openshift_libvirt_network_bridge }}"
 openshift_libvirt_firewall_source_nat_from_zone: trusted
 openshift_libvirt_firewall_source_nat_to_zone: public
-openshift_libvirt_firewall_source_nat_masquerade_from_zone: false

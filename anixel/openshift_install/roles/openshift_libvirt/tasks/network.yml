@@ -3,17 +3,33 @@
 - name: Init DHCP host list with load balancer | openshift_install.openshift_libvirt
   ansible.builtin.set_fact:
     openshift_libvirt_network_dhcp_hosts:
-      - ip: "{{ openshift_libvirt_loadbalancer_ip }}"
+      - mac: "{{ openshift_libvirt_haproxy_vm_mac }}"
+        ip: "{{ openshift_libvirt_loadbalancer_ip }}"
+        hostname: "haproxy.{{ openshift_libvirt_cluster_domain }}"
+
+- name: Add bootstrap node DHCP reservation | openshift_install.openshift_libvirt
+  ansible.builtin.set_fact:
+    openshift_libvirt_network_dhcp_hosts: >-
+      {{
+        openshift_libvirt_network_dhcp_hosts + [{
+          'mac': openshift_libvirt_bootstrap_vm_mac,
+          'ip': openshift_libvirt_network_dhcp_range_start.rsplit('.', 1)[0]
+            ~ '.'
+            ~ ((openshift_libvirt_network_dhcp_range_start.rsplit('.', 1)[1] | int) + (openshift_libvirt_master_nodes | int) + (openshift_libvirt_worker_nodes | int) + 1),
+          'hostname': 'bootstrap.' ~ openshift_libvirt_cluster_domain,
+        }]
+      }}
 
 - name: Add master node DHCP reservations | openshift_install.openshift_libvirt
   ansible.builtin.set_fact:
     openshift_libvirt_network_dhcp_hosts: >-
       {{
         openshift_libvirt_network_dhcp_hosts + [{
+          'mac': (openshift_libvirt_master_node_mac_prefix ~ ':%02x') | format(item | int),
           'ip': openshift_libvirt_network_dhcp_range_start.rsplit('.', 1)[0]
             ~ '.'
             ~ ((openshift_libvirt_network_dhcp_range_start.rsplit('.', 1)[1] | int) + (item | int) + 1),
-          'name': 'master-' ~ item ~ '.' ~ openshift_libvirt_cluster_domain,
+          'hostname': 'master-' ~ item ~ '.' ~ openshift_libvirt_cluster_domain,
         }]
       }}
   loop: "{{ range(0, openshift_libvirt_master_nodes | int) | list }}"
@@ -23,10 +39,11 @@
     openshift_libvirt_network_dhcp_hosts: >-
       {{
         openshift_libvirt_network_dhcp_hosts + [{
+          'mac': (openshift_libvirt_worker_node_mac_prefix ~ ':%02x') | format(item | int),
           'ip': openshift_libvirt_network_dhcp_range_start.rsplit('.', 1)[0]
             ~ '.'
             ~ ((openshift_libvirt_network_dhcp_range_start.rsplit('.', 1)[1] | int) + (openshift_libvirt_master_nodes | int) + (item | int) + 1),
-          'name': 'compute-' ~ item ~ '.' ~ openshift_libvirt_cluster_domain,
+          'hostname': 'compute-' ~ item ~ '.' ~ openshift_libvirt_cluster_domain,
         }]
       }}
   loop: "{{ range(0, openshift_libvirt_worker_nodes | int) | list }}"

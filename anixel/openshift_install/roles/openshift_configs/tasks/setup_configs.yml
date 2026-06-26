@@ -3,6 +3,12 @@
 - name: asserts | openshift_install.openshift_configs
   ansible.builtin.include_tasks: asserts.yml
 
+- name: Ensure OpenShift install workdir exists | openshift_install.openshift_configs
+  ansible.builtin.file:
+    path: "{{ openshift_configs_workdir }}"
+    state: directory
+    mode: "0750"
+
 - name: Render install-config.yaml
   ansible.builtin.template:
     src: install-config.yaml.j2

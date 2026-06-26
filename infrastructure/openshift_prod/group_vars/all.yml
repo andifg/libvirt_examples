@@ -151,10 +151,11 @@ openshift_configs_workdir: /var/lib/openshift-install
 openshift_configs_cluster_name: openshift-prod
 openshift_configs_base_domain: gummy-bears.de
 
-openshift_libvirt_cluster_name: openshift-prod
-openshift_libvirt_base_domain: gummy-bears.de
+openshift_libvirt_cluster_name: "{{ openshift_configs_cluster_name }}"
+openshift_libvirt_base_domain: "{{ openshift_configs_base_domain }}"
 
 cloudflare_dns_zone: "{{ openshift_libvirt_base_domain }}"
+cloudflare_dns_base_domain: "{{ openshift_libvirt_base_domain }}"
 cloudflare_dns_cluster_name: "{{ openshift_libvirt_cluster_name }}"
 cloudflare_dns_target_ip: "{{ ansible_host }}"
 

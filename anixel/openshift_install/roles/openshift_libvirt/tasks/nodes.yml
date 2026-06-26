@@ -18,3 +18,5 @@
     libvirt_vm_cloud_init_enabled: false
     libvirt_vm_networks:
       - network: "{{ openshift_libvirt_network_name }}"
+        mac:
+          address: "{{ openshift_libvirt_bootstrap_vm_mac }}"
