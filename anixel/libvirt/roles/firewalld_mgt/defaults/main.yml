@@ -21,7 +21,9 @@ firewalld_mgmt_proto: tcp
 # Source NAT mode (firewalld_mgmt_type: source_nat):
 # - firewalld_mgmt_source_nat_interface: source interface (required), e.g. hvopen0
 # - firewalld_mgmt_source_nat_from_zone: zone that should trust/accept that source interface
-# - firewalld_mgmt_source_nat_to_zone: egress zone where masquerade is enabled
+# - firewalld_mgmt_source_nat_to_zone: egress zone where masquerade is enabled (default public)
+# - firewalld_mgmt_source_nat_masquerade_from_zone: optional masquerade on source zone (default false)
 firewalld_mgmt_source_nat_interface: ""
 firewalld_mgmt_source_nat_from_zone: trusted
 firewalld_mgmt_source_nat_to_zone: public
+firewalld_mgmt_source_nat_masquerade_from_zone: false

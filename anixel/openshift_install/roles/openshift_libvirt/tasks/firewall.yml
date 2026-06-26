@@ -8,6 +8,7 @@
     firewalld_mgmt_source_nat_interface: "{{ openshift_libvirt_firewall_source_nat_interface }}"
     firewalld_mgmt_source_nat_from_zone: "{{ openshift_libvirt_firewall_source_nat_from_zone }}"
     firewalld_mgmt_source_nat_to_zone: "{{ openshift_libvirt_firewall_source_nat_to_zone }}"
+    firewalld_mgmt_source_nat_masquerade_from_zone: "{{ openshift_libvirt_firewall_source_nat_masquerade_from_zone }}"
 
 - name: DNAT hypervisor TCP to load balancer guest (firewalld public zone) | openshift_install.openshift_libvirt
   ansible.builtin.include_role:
@@ -22,3 +23,6 @@
     - "22623"
     - "6443"
   when: openshift_libvirt_loadbalancer_ip | length > 0
+
+# add policy firewall-cmd --permanent --policy=VMLoopbackNAT --add-rich-rule='rule family="ipv4" destination address="88.99.99.79" forward-port port="6443" protocol="tcp" to-port="6443" to-addr="192.168.150.2"'
+# firewall-cmd --permanent --policy=LocalLoopbackNAT --add-rich-rule='rule family="ipv4" destination address="88.99.99.79" forward-port port="6443" protocol="tcp" to-port="6443" to-addr="192.168.150.2"'

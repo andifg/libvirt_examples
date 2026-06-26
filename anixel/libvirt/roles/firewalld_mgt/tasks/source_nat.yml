@@ -36,9 +36,18 @@
     state: "{{ 'enabled' if firewalld_mgmt_mode == 'present' else 'disabled' }}"
     interface: "{{ firewalld_mgmt_source_nat_interface }}"
 
-- name: Ensure masquerade on egress zone | firewalld_mgmt
+- name: Ensure masquerade on source NAT egress zone | firewalld_mgmt
   ansible.posix.firewalld:
     zone: "{{ firewalld_mgmt_source_nat_to_zone }}"
+    permanent: "{{ firewalld_mgmt_permanent | bool }}"
+    immediate: "{{ firewalld_mgmt_immediate | bool }}"
+    state: "{{ 'enabled' if firewalld_mgmt_mode == 'present' else 'disabled' }}"
+    masquerade: true
+
+- name: Ensure masquerade on source NAT source zone | firewalld_mgmt
+  when: firewalld_mgmt_source_nat_masquerade_from_zone | bool
+  ansible.posix.firewalld:
+    zone: "{{ firewalld_mgmt_source_nat_from_zone }}"
     permanent: "{{ firewalld_mgmt_permanent | bool }}"
     immediate: "{{ firewalld_mgmt_immediate | bool }}"
     state: "{{ 'enabled' if firewalld_mgmt_mode == 'present' else 'disabled' }}"
