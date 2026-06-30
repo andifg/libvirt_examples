@@ -19,9 +19,9 @@
 - name: Require supported firewalld_mgmt_type | firewalld_mgmt
   ansible.builtin.assert:
     that:
-      - firewalld_mgmt_type in ['none', 'destination_nat', 'destination_nat_purge', 'source_nat']
+      - firewalld_mgmt_type in ['none', 'destination_nat', 'destination_nat_purge', 'source_nat', 'policy']
     fail_msg: >-
-      Set firewalld_mgmt_type to none, destination_nat, destination_nat_purge, or source_nat.
+      Set firewalld_mgmt_type to none, destination_nat, destination_nat_purge, source_nat, or policy.
 
 - name: Ensure firewalld is installed | firewalld_mgmt
   ansible.builtin.package:
@@ -47,3 +47,7 @@
 - name: Include source NAT configuration | firewalld_mgmt
   ansible.builtin.include_tasks: source_nat.yml
   when: firewalld_mgmt_type == 'source_nat'
+
+- name: Include firewalld policy configuration | firewalld_mgmt
+  ansible.builtin.include_tasks: policy.yml
+  when: firewalld_mgmt_type == 'policy'

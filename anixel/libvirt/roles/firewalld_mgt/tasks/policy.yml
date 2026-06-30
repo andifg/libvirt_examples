@@ -1,0 +1,234 @@
+# SPDX-License-Identifier: MIT-0
+---
+# firewalld policy: apply desired permanent config via firewall-cmd (convergence, no pre-checks).
+
+- name: Require firewalld policy name | firewalld_mgmt
+  ansible.builtin.assert:
+    that:
+      - firewalld_mgmt_policy_name is defined
+      - firewalld_mgmt_policy_name | string | length > 0
+    fail_msg: Set firewalld_mgmt_policy_name (e.g. LocalLoopbackNAT).
+
+- name: Configure firewalld policy | firewalld_mgmt
+  when: firewalld_mgmt_mode == 'present'
+  block:
+    - name: Require firewalld policy rich rules | firewalld_mgmt
+      ansible.builtin.assert:
+        that:
+          - firewalld_mgmt_policy_rich_rules is defined
+          - firewalld_mgmt_policy_rich_rules | length > 0
+        fail_msg: >-
+          Set firewalld_mgmt_policy_rich_rules
+          (e.g. rule family="ipv4" destination address="1.2.3.4" forward-port ...).
+
+    - name: Create firewalld policy | firewalld_mgmt
+      ansible.builtin.command:
+        argv:
+          - firewall-cmd
+          - --permanent
+          - "--new-policy={{ firewalld_mgmt_policy_name }}"
+      register: _firewalld_mgmt_policy_new
+      changed_when: _firewalld_mgmt_policy_new.rc == 0
+      failed_when: >-
+        _firewalld_mgmt_policy_new.rc != 0
+        and 'NAMEConflictException' not in (_firewalld_mgmt_policy_new.stderr | default(''))
+
+    - name: Set permanent policy priority | firewalld_mgmt
+      when:
+        - firewalld_mgmt_policy_priority is defined
+        - firewalld_mgmt_policy_priority | string | length > 0
+      ansible.builtin.command:
+        argv:
+          - firewall-cmd
+          - --permanent
+          - "--policy={{ firewalld_mgmt_policy_name }}"
+          - "--set-priority={{ firewalld_mgmt_policy_priority }}"
+      changed_when: false
+      failed_when: false
+
+    - name: Set permanent policy target | firewalld_mgmt
+      when:
+        - firewalld_mgmt_policy_target is defined
+        - firewalld_mgmt_policy_target | string | length > 0
+      ansible.builtin.command:
+        argv:
+          - firewall-cmd
+          - --permanent
+          - "--policy={{ firewalld_mgmt_policy_name }}"
+          - "--set-target={{ firewalld_mgmt_policy_target }}"
+      changed_when: false
+      failed_when: false
+
+    - name: List permanent ingress zones on firewalld policy | firewalld_mgmt
+      when:
+        - firewalld_mgmt_policy_ingress_zone is defined
+        - firewalld_mgmt_policy_ingress_zone | string | length > 0
+      ansible.builtin.command:
+        argv:
+          - firewall-cmd
+          - --permanent
+          - "--policy={{ firewalld_mgmt_policy_name }}"
+          - --list-ingress-zones
+      register: _firewalld_mgmt_policy_ingress_list
+      changed_when: false
+      failed_when: false
+
+    - name: Build firewalld policy ingress zone state | firewalld_mgmt
+      when:
+        - firewalld_mgmt_policy_ingress_zone is defined
+        - firewalld_mgmt_policy_ingress_zone | string | length > 0
+      ansible.builtin.set_fact:
+        _firewalld_mgmt_policy_ingress_zones_current: "{{ (_firewalld_mgmt_policy_ingress_list.stdout | default('') | trim).split() }}"
+        _firewalld_mgmt_policy_ingress_zones_desired: "{{ [firewalld_mgmt_policy_ingress_zone] }}"
+
+    - name: Remove ingress zones not in desired list from firewalld policy | firewalld_mgmt
+      when:
+        - firewalld_mgmt_policy_ingress_zone is defined
+        - firewalld_mgmt_policy_ingress_zone | string | length > 0
+        - item not in _firewalld_mgmt_policy_ingress_zones_desired
+      ansible.builtin.command:
+        argv:
+          - firewall-cmd
+          - --permanent
+          - "--policy={{ firewalld_mgmt_policy_name }}"
+          - "--remove-ingress-zone={{ item }}"
+      loop: "{{ _firewalld_mgmt_policy_ingress_zones_current }}"
+      changed_when: false
+      failed_when: false
+
+    - name: Add missing ingress zones to firewalld policy | firewalld_mgmt
+      when:
+        - firewalld_mgmt_policy_ingress_zone is defined
+        - firewalld_mgmt_policy_ingress_zone | string | length > 0
+        - item not in _firewalld_mgmt_policy_ingress_zones_current
+      ansible.builtin.command:
+        argv:
+          - firewall-cmd
+          - --permanent
+          - "--policy={{ firewalld_mgmt_policy_name }}"
+          - "--add-ingress-zone={{ item }}"
+      loop: "{{ _firewalld_mgmt_policy_ingress_zones_desired }}"
+      changed_when: false
+      failed_when: false
+
+    - name: List permanent egress zones on firewalld policy | firewalld_mgmt
+      when:
+        - firewalld_mgmt_policy_egress_zone is defined
+        - firewalld_mgmt_policy_egress_zone | string | length > 0
+      ansible.builtin.command:
+        argv:
+          - firewall-cmd
+          - --permanent
+          - "--policy={{ firewalld_mgmt_policy_name }}"
+          - --list-egress-zones
+      register: _firewalld_mgmt_policy_egress_list
+      changed_when: false
+      failed_when: false
+
+    - name: Build firewalld policy egress zone state | firewalld_mgmt
+      when:
+        - firewalld_mgmt_policy_egress_zone is defined
+        - firewalld_mgmt_policy_egress_zone | string | length > 0
+      ansible.builtin.set_fact:
+        _firewalld_mgmt_policy_egress_zones_current: "{{ (_firewalld_mgmt_policy_egress_list.stdout | default('') | trim).split() }}"
+        _firewalld_mgmt_policy_egress_zones_desired: "{{ [firewalld_mgmt_policy_egress_zone] }}"
+
+    - name: Remove egress zones not in desired list from firewalld policy | firewalld_mgmt
+      when:
+        - firewalld_mgmt_policy_egress_zone is defined
+        - firewalld_mgmt_policy_egress_zone | string | length > 0
+        - item not in _firewalld_mgmt_policy_egress_zones_desired
+      ansible.builtin.command:
+        argv:
+          - firewall-cmd
+          - --permanent
+          - "--policy={{ firewalld_mgmt_policy_name }}"
+          - "--remove-egress-zone={{ item }}"
+      loop: "{{ _firewalld_mgmt_policy_egress_zones_current }}"
+      changed_when: false
+      failed_when: false
+
+    - name: Add missing egress zones to firewalld policy | firewalld_mgmt
+      when:
+        - firewalld_mgmt_policy_egress_zone is defined
+        - firewalld_mgmt_policy_egress_zone | string | length > 0
+        - item not in _firewalld_mgmt_policy_egress_zones_current
+      ansible.builtin.command:
+        argv:
+          - firewall-cmd
+          - --permanent
+          - "--policy={{ firewalld_mgmt_policy_name }}"
+          - "--add-egress-zone={{ item }}"
+      loop: "{{ _firewalld_mgmt_policy_egress_zones_desired }}"
+      changed_when: false
+      failed_when: false
+
+    - name: List permanent rich rules on firewalld policy | firewalld_mgmt
+      ansible.builtin.command:
+        argv:
+          - firewall-cmd
+          - --permanent
+          - "--policy={{ firewalld_mgmt_policy_name }}"
+          - --list-rich-rules
+      register: _firewalld_mgmt_policy_rich_rules_list
+      changed_when: false
+      failed_when: false
+
+    - name: Build firewalld policy rich rule state | firewalld_mgmt
+      ansible.builtin.set_fact:
+        _firewalld_mgmt_policy_rich_rules_current: >-
+          {{
+            _firewalld_mgmt_policy_rich_rules_list.stdout_lines
+            | default([])
+            | map('trim')
+            | reject('equalto', '')
+            | list
+          }}
+        _firewalld_mgmt_policy_rich_rules_desired: "{{ firewalld_mgmt_policy_rich_rules }}"
+
+    - name: Remove rich rules not in desired list from firewalld policy | firewalld_mgmt
+      when: item not in _firewalld_mgmt_policy_rich_rules_desired
+      ansible.builtin.command:
+        argv:
+          - firewall-cmd
+          - --permanent
+          - "--policy={{ firewalld_mgmt_policy_name }}"
+          - "--remove-rich-rule={{ item }}"
+      loop: "{{ _firewalld_mgmt_policy_rich_rules_current }}"
+      changed_when: false
+      failed_when: false
+      loop_control:
+        label: "{{ item }}"
+
+    - name: Add missing rich rules to firewalld policy | firewalld_mgmt
+      when: item not in _firewalld_mgmt_policy_rich_rules_current
+      ansible.builtin.command:
+        argv:
+          - firewall-cmd
+          - --permanent
+          - "--policy={{ firewalld_mgmt_policy_name }}"
+          - "--add-rich-rule={{ item }}"
+      loop: "{{ _firewalld_mgmt_policy_rich_rules_desired }}"
+      changed_when: false
+      failed_when: false
+      loop_control:
+        label: "{{ item }}"
+
+- name: Delete firewalld policy | firewalld_mgmt
+  when: firewalld_mgmt_mode == 'absent'
+  block:
+    - name: Delete permanent firewalld policy | firewalld_mgmt
+      ansible.builtin.command:
+        argv:
+          - firewall-cmd
+          - --permanent
+          - "--delete-policy={{ firewalld_mgmt_policy_name }}"
+      register: _firewalld_mgmt_policy_delete
+      changed_when: _firewalld_mgmt_policy_delete.rc == 0
+      failed_when: false
+
+- name: Reload firewalld to activate permanent policy changes | firewalld_mgmt
+  when: firewalld_mgmt_immediate | bool
+  ansible.builtin.command:
+    argv: [firewall-cmd, --reload]
+  changed_when: false

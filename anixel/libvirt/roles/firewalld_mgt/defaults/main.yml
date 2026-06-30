@@ -2,6 +2,7 @@
 ---
 # destination_nat -> include tasks/destination_nat.yml
 # source_nat -> include tasks/source_nat.yml
+# policy -> include tasks/policy.yml
 # none -> install/start firewalld only
 firewalld_mgmt_type: destination_nat
 
@@ -27,3 +28,16 @@ firewalld_mgmt_source_nat_interface: ""
 firewalld_mgmt_source_nat_from_zone: trusted
 firewalld_mgmt_source_nat_to_zone: public
 firewalld_mgmt_source_nat_masquerade_from_zone: false
+
+# Policy mode (firewalld_mgmt_type: policy):
+# - firewalld_mgmt_policy_name: policy name (e.g. LocalLoopbackNAT)
+# - firewalld_mgmt_policy_rich_rules: rich rule strings (present mode)
+# - firewalld_mgmt_policy_priority / _target (present mode)
+# - firewalld_mgmt_policy_ingress_zone / _egress_zone: desired zone (syncs via remove/add)
+# - absent mode deletes the policy (--delete-policy); rich_rules not required
+firewalld_mgmt_policy_name: ""
+firewalld_mgmt_policy_rich_rules: []
+firewalld_mgmt_policy_priority: ""
+firewalld_mgmt_policy_target: CONTINUE
+firewalld_mgmt_policy_ingress_zone: ""
+firewalld_mgmt_policy_egress_zone: ""
