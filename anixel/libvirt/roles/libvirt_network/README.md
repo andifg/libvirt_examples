@@ -13,7 +13,7 @@ Guest **`virsh dumpxml`** only shows `<source network='…' bridge='…'/>` for 
 
 ## Static DHCP and DNS
 
-When the network is not **`isolated`**, set **`libvirt_network_dhcp_hosts`** to a list of objects with any of **`mac`**, **`ip`**, or **`hostname`**. **`mac`** + **`ip`** render a static lease in **`<dhcp>`**; **`hostname`** + **`ip`** on the same item also render a **`<dns>`** entry (see **`templates/network.xml.j2`**).
+When the network is not **`isolated`**, set **`libvirt_network_dhcp_hosts`** to a list of objects with any of **`mac`**, **`ip`**, **`name`**, or **`hostname`**. **`mac`** + **`ip`** (+ optional **`name`**) render a static lease in **`<dhcp>`**; **`hostname`** + **`ip`** on the same item also render a **`<dns>`** entry (see **`templates/network.xml.j2`**).
 
 Libvirt uses two XML sections (do not put **`<hostname>`** inside **`<dhcp><host>`** — it is ignored):
 
@@ -25,7 +25,7 @@ Libvirt uses two XML sections (do not put **`<hostname>`** inside **`<dhcp><host
 </dns>
 <ip address="192.168.150.1" netmask="255.255.255.0">
   <dhcp>
-    <host mac="52:54:00:ab:cd:20" ip="192.168.150.6"/>
+    <host mac="52:54:00:ab:cd:20" name="bootstrap.example.com" ip="192.168.150.6"/>
   </dhcp>
 </ip>
 ```

@@ -1,32 +1,37 @@
 # SPDX-License-Identifier: MIT-0
 ---
-- name: Require Red Hat family OS
-  ansible.builtin.assert:
-    that:
-      - ansible_os_family == "RedHat"
-    fail_msg: >-
-      This role targets Red Hat family systems only (ansible_os_family: {{ ansible_os_family }}).
+- name: asserts | libvirt_network
+  ansible.builtin.include_tasks: asserts.yml
 
-- name: Render libvirt network XML | libvirt_network
-  ansible.builtin.set_fact:
-    libvirt_network_xml: "{{ lookup('ansible.builtin.template', 'network.xml.j2') }}"
-
-- name: Show libvirt network XML | libvirt_network
-  ansible.builtin.debug:
-    var: libvirt_network_xml
+- name: Remove libvirt network | libvirt_network
+  when: libvirt_network_state == 'absent'
+  community.libvirt.virt_net:
+    state: absent
+    name: "{{ libvirt_network_name }}"
 
 - name: Define libvirt network | libvirt_network
-  community.libvirt.virt_net:
-    command: define
-    name: "{{ libvirt_network_name }}"
-    xml: "{{ libvirt_network_xml }}"
+  when: libvirt_network_state == 'present'
+  block:
+    - name: Render libvirt network XML | libvirt_network
+      ansible.builtin.set_fact:
+        libvirt_network_xml: "{{ lookup('ansible.builtin.template', 'network.xml.j2') }}"
 
-- name: Start libvirt network | libvirt_network
-  community.libvirt.virt_net:
-    command: start
-    name: "{{ libvirt_network_name }}"
+    - name: Show libvirt network XML | libvirt_network
+      ansible.builtin.debug:
+        var: libvirt_network_xml
 
-- name: Enable autostart for libvirt network | libvirt_network
-  community.libvirt.virt_net:
-    autostart: true
-    name: "{{ libvirt_network_name }}"
+    - name: Define libvirt network | libvirt_network
+      community.libvirt.virt_net:
+        command: define
+        name: "{{ libvirt_network_name }}"
+        xml: "{{ libvirt_network_xml }}"
+
+    - name: Start libvirt network | libvirt_network
+      community.libvirt.virt_net:
+        command: start
+        name: "{{ libvirt_network_name }}"
+
+    - name: Enable autostart for libvirt network | libvirt_network
+      community.libvirt.virt_net:
+        autostart: true
+        name: "{{ libvirt_network_name }}"

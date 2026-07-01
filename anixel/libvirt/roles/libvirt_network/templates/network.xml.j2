@@ -38,8 +38,8 @@
     <dhcp>
       <range start="{{ libvirt_network_dhcp_range_start }}" end="{{ libvirt_network_dhcp_range_end }}"/>
 {% for h in libvirt_network_dhcp_hosts | default([]) %}
-{% if h.get('mac') or h.get('ip') %}
-      <host{%- if h.get('mac') %} mac="{{ h.get('mac') }}"{%- endif -%}{%- if h.get('ip') %} ip="{{ h.get('ip') }}"{%- endif %}/>
+{% if h.get('mac') or h.get('ip') or h.get('name') %}
+      <host{%- if h.get('mac') %} mac="{{ h.get('mac') }}"{%- endif -%}{%- if h.get('name') %} name="{{ h.get('name') }}"{%- endif -%}{%- if h.get('ip') %} ip="{{ h.get('ip') }}"{%- endif %}/>
 {% endif %}
 {% endfor %}
     </dhcp>
