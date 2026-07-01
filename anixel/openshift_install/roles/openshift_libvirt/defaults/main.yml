@@ -19,6 +19,9 @@ openshift_libvirt_base_domain: ""
 openshift_libvirt_master_nodes: 3
 openshift_libvirt_worker_nodes: 0
 
+# HAProxy ingress-router-80/443 backends (templates/haproxy.cfg.j2): worker when openshift_libvirt_worker_nodes > 0, else master.
+openshift_libvirt_ingress_backend: "{{ 'worker' if (openshift_libvirt_worker_nodes | int) > 0 else 'master' }}"
+
 # Bootstrap VM (RHCOS + bootstrap.ign; tasks/nodes.yml; libvirt domain name is always bootstrap).
 openshift_libvirt_bootstrap_vm:
   memory: 16384

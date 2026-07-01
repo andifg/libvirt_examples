@@ -23,6 +23,7 @@ Provisions the OpenShift UPI libvirt lab on the hypervisor: OPEN virtual network
 | `openshift_libvirt_base_domain` | `""` | **Required.** Base domain (e.g. `example.com`). |
 | `openshift_libvirt_master_nodes` | `3` | Control-plane node count; HAProxy backends and DHCP names `master-0` … `master-N`. |
 | `openshift_libvirt_worker_nodes` | `0` | Worker node count; HAProxy ingress backends and DHCP names `compute-0` … `compute-N`. |
+| `openshift_libvirt_ingress_backend` | `worker` if `openshift_libvirt_worker_nodes` > 0, else `master` | HAProxy ingress-router **80/443** backends; override in inventory to force **`master`** or **`worker`**. |
 | `openshift_libvirt_bootstrap_vm` | `memory: 16384`, `vcpus: 4`, `os_name: rhel9.6` | Bootstrap RHCOS VM sizing for **`tasks/nodes.yml`**. |
 
 ## Description

@@ -1,6 +1,13 @@
 {# SPDX-License-Identifier: MIT-0 #}
 {# OpenShift install load balancer (user-provided layout). #}
 {% set _cluster_domain = openshift_libvirt_cluster_name ~ '.' ~ openshift_libvirt_base_domain %}
+{% if openshift_libvirt_ingress_backend == 'master' %}
+{% set _ingress_nodes = openshift_libvirt_master_nodes | int %}
+{% set _ingress_prefix = 'master' %}
+{% else %}
+{% set _ingress_nodes = openshift_libvirt_worker_nodes | int %}
+{% set _ingress_prefix = 'compute' %}
+{% endif %}
 global
   log         127.0.0.1 local2
   pidfile     /var/run/haproxy.pid
@@ -42,13 +49,13 @@ listen ingress-router-443
   bind *:443
   mode tcp
   balance source
-{% for i in range(openshift_libvirt_worker_nodes | int) %}
-  server compute-{{ i }} compute-{{ i }}.{{ _cluster_domain }}:443 check inter 1s
+{% for i in range(_ingress_nodes) %}
+  server {{ _ingress_prefix }}-{{ i }} {{ _ingress_prefix }}-{{ i }}.{{ _cluster_domain }}:443 check inter 1s
 {% endfor %}
 listen ingress-router-80
   bind *:80
   mode tcp
   balance source
-{% for i in range(openshift_libvirt_worker_nodes | int) %}
-  server compute-{{ i }} compute-{{ i }}.{{ _cluster_domain }}:80 check inter 1s
+{% for i in range(_ingress_nodes) %}
+  server {{ _ingress_prefix }}-{{ i }} {{ _ingress_prefix }}-{{ i }}.{{ _cluster_domain }}:80 check inter 1s
 {% endfor %}
