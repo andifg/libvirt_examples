@@ -3,35 +3,35 @@
 - name: asserts | libvirt_network
   ansible.builtin.include_tasks: asserts.yml
 
-- name: Remove libvirt network | libvirt_network
+- name: Remove libvirt network | libvirt_network ({{ libvirt_network_name }})
   when: libvirt_network_state == 'absent'
   community.libvirt.virt_net:
     state: absent
     name: "{{ libvirt_network_name }}"
 
-- name: Define libvirt network | libvirt_network
+- name: Define libvirt network | libvirt_network ({{ libvirt_network_name }})
   when: libvirt_network_state == 'present'
   block:
-    - name: Render libvirt network XML | libvirt_network
+    - name: Render libvirt network XML | libvirt_network ({{ libvirt_network_name }})
       ansible.builtin.set_fact:
         libvirt_network_xml: "{{ lookup('ansible.builtin.template', 'network.xml.j2') }}"
 
-    - name: Show libvirt network XML | libvirt_network
+    - name: Show libvirt network XML | libvirt_network ({{ libvirt_network_name }})
       ansible.builtin.debug:
         var: libvirt_network_xml
 
-    - name: Define libvirt network | libvirt_network
+    - name: Define libvirt network | libvirt_network ({{ libvirt_network_name }})
       community.libvirt.virt_net:
         command: define
         name: "{{ libvirt_network_name }}"
         xml: "{{ libvirt_network_xml }}"
 
-    - name: Start libvirt network | libvirt_network
+    - name: Start libvirt network | libvirt_network ({{ libvirt_network_name }})
       community.libvirt.virt_net:
         command: start
         name: "{{ libvirt_network_name }}"
 
-    - name: Enable autostart for libvirt network | libvirt_network
+    - name: Enable autostart for libvirt network | libvirt_network ({{ libvirt_network_name }})
       community.libvirt.virt_net:
         autostart: true
         name: "{{ libvirt_network_name }}"

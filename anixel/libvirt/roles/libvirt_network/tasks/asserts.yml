@@ -1,22 +1,21 @@
 # SPDX-License-Identifier: MIT-0
 ---
-- name: Require Red Hat family OS | libvirt_network
+- name: Require libvirt_network_name | libvirt_network
+  ansible.builtin.assert:
+    that:
+      - libvirt_network_name is defined
+      - libvirt_network_name | string | length > 0
+    fail_msg: Set libvirt_network_name.
+
+- name: Require Red Hat family OS | libvirt_network ({{ libvirt_network_name }})
   ansible.builtin.assert:
     that:
       - ansible_os_family == "RedHat"
     fail_msg: >-
       This role targets Red Hat family systems only (ansible_os_family: {{ ansible_os_family }}).
 
-- name: Require supported libvirt_network_state | libvirt_network
+- name: Require supported libvirt_network_state | libvirt_network ({{ libvirt_network_name }})
   ansible.builtin.assert:
     that:
       - libvirt_network_state in ['present', 'absent']
     fail_msg: Set libvirt_network_state to present or absent.
-
-- name: Require libvirt_network_name | libvirt_network
-  when: libvirt_network_state == 'absent'
-  ansible.builtin.assert:
-    that:
-      - libvirt_network_name is defined
-      - libvirt_network_name | string | length > 0
-    fail_msg: Set libvirt_network_name.
