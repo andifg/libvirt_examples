@@ -6,13 +6,16 @@
   tasks:
     - ansible.builtin.import_role:
         name: cloudflare_dns
+      tags: [setup]
 
     - ansible.builtin.import_role:
         name: setup_clis
+      tags: [setup]
 
     - ansible.builtin.include_role:
         name: openshift_configs
         tasks_from: setup_configs.yml
+      tags: [setup, destroy]
 
     - ansible.builtin.include_role:
         name: openshift_libvirt
@@ -22,3 +25,4 @@
         openshift_libvirt_bootstrap_ign_path: "{{ openshift_configs_bootstrap_ign_path }}"
         openshift_libvirt_master_ign_path: "{{ openshift_configs_master_ign_path }}"
         openshift_libvirt_worker_ign_path: "{{ openshift_configs_worker_ign_path }}"
+      tags: [setup, destroy]

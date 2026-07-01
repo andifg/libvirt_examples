@@ -1,57 +1,60 @@
 # SPDX-License-Identifier: MIT-0
 ---
-- name: Require openshift_libvirt_coreos_qcow2_gz_location | openshift_install.openshift_libvirt
-  ansible.builtin.assert:
-    that:
-      - openshift_libvirt_coreos_qcow2_gz_location is defined
-      - openshift_libvirt_coreos_qcow2_gz_location | length > 0
-    fail_msg: Set openshift_libvirt_coreos_qcow2_gz_location (RHCOS qemu qcow2.gz URL from openshift_configs).
+- name: Require OpenShift libvirt variables | openshift_install.openshift_libvirt
+  tags: [setup]
+  block:
+    - name: Require openshift_libvirt_coreos_qcow2_gz_location | openshift_install.openshift_libvirt
+      ansible.builtin.assert:
+        that:
+          - openshift_libvirt_coreos_qcow2_gz_location is defined
+          - openshift_libvirt_coreos_qcow2_gz_location | length > 0
+        fail_msg: Set openshift_libvirt_coreos_qcow2_gz_location (RHCOS qemu qcow2.gz URL from openshift_configs).
 
-- name: Require openshift_libvirt_coreos_qcow2_gz_sha256 | openshift_install.openshift_libvirt
-  ansible.builtin.assert:
-    that:
-      - openshift_libvirt_coreos_qcow2_gz_sha256 is defined
-      - openshift_libvirt_coreos_qcow2_gz_sha256 | length > 0
-    fail_msg: Set openshift_libvirt_coreos_qcow2_gz_sha256 (sha256 for the RHCOS qcow2.gz).
+    - name: Require openshift_libvirt_coreos_qcow2_gz_sha256 | openshift_install.openshift_libvirt
+      ansible.builtin.assert:
+        that:
+          - openshift_libvirt_coreos_qcow2_gz_sha256 is defined
+          - openshift_libvirt_coreos_qcow2_gz_sha256 | length > 0
+        fail_msg: Set openshift_libvirt_coreos_qcow2_gz_sha256 (sha256 for the RHCOS qcow2.gz).
 
-- name: Require openshift_libvirt_bootstrap_ign_path | openshift_install.openshift_libvirt
-  ansible.builtin.assert:
-    that:
-      - openshift_libvirt_bootstrap_ign_path is defined
-      - openshift_libvirt_bootstrap_ign_path | length > 0
-    fail_msg: Set openshift_libvirt_bootstrap_ign_path (bootstrap.ign path on the bastion).
+    - name: Require openshift_libvirt_bootstrap_ign_path | openshift_install.openshift_libvirt
+      ansible.builtin.assert:
+        that:
+          - openshift_libvirt_bootstrap_ign_path is defined
+          - openshift_libvirt_bootstrap_ign_path | length > 0
+        fail_msg: Set openshift_libvirt_bootstrap_ign_path (bootstrap.ign path on the bastion).
 
-- name: Require openshift_libvirt_master_ign_path | openshift_install.openshift_libvirt
-  ansible.builtin.assert:
-    that:
-      - openshift_libvirt_master_ign_path is defined
-      - openshift_libvirt_master_ign_path | length > 0
-    fail_msg: Set openshift_libvirt_master_ign_path (master.ign path on the bastion).
+    - name: Require openshift_libvirt_master_ign_path | openshift_install.openshift_libvirt
+      ansible.builtin.assert:
+        that:
+          - openshift_libvirt_master_ign_path is defined
+          - openshift_libvirt_master_ign_path | length > 0
+        fail_msg: Set openshift_libvirt_master_ign_path (master.ign path on the bastion).
 
-- name: Require openshift_libvirt_worker_ign_path | openshift_install.openshift_libvirt
-  ansible.builtin.assert:
-    that:
-      - openshift_libvirt_worker_ign_path is defined
-      - openshift_libvirt_worker_ign_path | length > 0
-    fail_msg: Set openshift_libvirt_worker_ign_path (worker.ign path on the bastion).
+    - name: Require openshift_libvirt_worker_ign_path | openshift_install.openshift_libvirt
+      ansible.builtin.assert:
+        that:
+          - openshift_libvirt_worker_ign_path is defined
+          - openshift_libvirt_worker_ign_path | length > 0
+        fail_msg: Set openshift_libvirt_worker_ign_path (worker.ign path on the bastion).
 
-- name: Require openshift_libvirt_haproxy_vm_password | openshift_install.openshift_libvirt
-  ansible.builtin.assert:
-    that:
-      - openshift_libvirt_haproxy_vm_password is defined
-      - openshift_libvirt_haproxy_vm_password | length > 0
-    fail_msg: Set openshift_libvirt_haproxy_vm_password (HAProxy VM cloud-init password).
+    - name: Require openshift_libvirt_haproxy_vm_password | openshift_install.openshift_libvirt
+      ansible.builtin.assert:
+        that:
+          - openshift_libvirt_haproxy_vm_password is defined
+          - openshift_libvirt_haproxy_vm_password | length > 0
+        fail_msg: Set openshift_libvirt_haproxy_vm_password (HAProxy VM cloud-init password).
 
-- name: Require openshift_libvirt_cluster_name | openshift_install.openshift_libvirt
-  ansible.builtin.assert:
-    that:
-      - openshift_libvirt_cluster_name is defined
-      - openshift_libvirt_cluster_name | length > 0
-    fail_msg: Set openshift_libvirt_cluster_name (e.g. openshift-prod).
+    - name: Require openshift_libvirt_cluster_name | openshift_install.openshift_libvirt
+      ansible.builtin.assert:
+        that:
+          - openshift_libvirt_cluster_name is defined
+          - openshift_libvirt_cluster_name | length > 0
+        fail_msg: Set openshift_libvirt_cluster_name (e.g. openshift-prod).
 
-- name: Require openshift_libvirt_base_domain | openshift_install.openshift_libvirt
-  ansible.builtin.assert:
-    that:
-      - openshift_libvirt_base_domain is defined
-      - openshift_libvirt_base_domain | length > 0
-    fail_msg: Set openshift_libvirt_base_domain (e.g. example.com).
+    - name: Require openshift_libvirt_base_domain | openshift_install.openshift_libvirt
+      ansible.builtin.assert:
+        that:
+          - openshift_libvirt_base_domain is defined
+          - openshift_libvirt_base_domain | length > 0
+        fail_msg: Set openshift_libvirt_base_domain (e.g. example.com).

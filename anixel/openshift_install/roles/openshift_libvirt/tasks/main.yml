@@ -2,15 +2,20 @@
 ---
 - name: asserts | openshift_install.openshift_libvirt
   ansible.builtin.include_tasks: asserts.yml
+  tags: [setup]
 
 - name: network | openshift_install.openshift_libvirt
   ansible.builtin.include_tasks: network.yml
+  tags: [setup, destroy]
 
 - name: firewall | openshift_install.openshift_libvirt
   ansible.builtin.include_tasks: firewall.yml
+  tags: [setup, destroy]
 
 - name: haproxy | openshift_install.openshift_libvirt
   ansible.builtin.include_tasks: haproxy.yml
+  tags: [setup, destroy]
 
 - name: nodes | openshift_install.openshift_libvirt
   ansible.builtin.include_tasks: nodes.yml
+  tags: [setup, destroy]

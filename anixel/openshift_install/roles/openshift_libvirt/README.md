@@ -25,6 +25,7 @@ Provisions the OpenShift UPI libvirt lab on the hypervisor: OPEN virtual network
 | `openshift_libvirt_worker_nodes` | `0` | Worker node count; HAProxy ingress backends and DHCP names `compute-0` … `compute-N`. |
 | `openshift_libvirt_ingress_backend` | `worker` if `openshift_libvirt_worker_nodes` > 0, else `master` | HAProxy ingress-router **80/443** backends; override in inventory to force **`master`** or **`worker`**. |
 | `openshift_libvirt_bootstrap_vm` | `memory: 16384`, `vcpus: 4`, `os_name: rhel9.6` | Bootstrap RHCOS VM sizing for **`tasks/nodes.yml`**. |
+| `openshift_libvirt_master_vm` | `memory: 16384`, `vcpus: 4`, `os_name: rhel9.6`, `disk_grow: "+30G"` | Control-plane RHCOS VM sizing; **`disk_grow`** → **`libvirt_vm_import_disk_grow`** (RHCOS expands root on first boot). |
 
 ## Description
 

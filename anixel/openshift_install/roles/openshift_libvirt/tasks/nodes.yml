@@ -1,22 +1,76 @@
 # SPDX-License-Identifier: MIT-0
 ---
 - name: Provision RHCOS bootstrap VM | openshift_install.openshift_libvirt
-  ansible.builtin.include_role:
-    name: anixel.libvirt.libvirt_vm
-  vars:
-    libvirt_vm_image_cache_dir: "{{ openshift_libvirt_image_cache_dir }}"
-    libvirt_vm_images_dir: "{{ openshift_libvirt_images_dir }}"
-    libvirt_vm_qcow2_download_timeout: 3600
-    libvirt_vm_name: bootstrap
-    libvirt_vm_os_name: "{{ openshift_libvirt_bootstrap_vm.os_name }}"
-    libvirt_vm_disk_type: qcow2
-    libvirt_vm_download_url: "{{ openshift_libvirt_coreos_qcow2_gz_location }}"
-    libvirt_vm_download_checksum_sha256: "{{ openshift_libvirt_coreos_qcow2_gz_sha256 }}"
-    libvirt_vm_memory: "{{ openshift_libvirt_bootstrap_vm.memory }}"
-    libvirt_vm_vcpus: "{{ openshift_libvirt_bootstrap_vm.vcpus }}"
-    libvirt_vm_ignition_file_path: "{{ openshift_libvirt_bootstrap_ign_path }}"
-    libvirt_vm_cloud_init_enabled: false
-    libvirt_vm_networks:
-      - network: "{{ openshift_libvirt_network_name }}"
-        mac:
-          address: "{{ openshift_libvirt_bootstrap_vm_mac }}"
+  tags: [setup]
+  block:
+    - name: Provision RHCOS bootstrap VM | openshift_install.openshift_libvirt
+      ansible.builtin.include_role:
+        name: anixel.libvirt.libvirt_vm
+      vars:
+        libvirt_vm_image_cache_dir: "{{ openshift_libvirt_image_cache_dir }}"
+        libvirt_vm_images_dir: "{{ openshift_libvirt_images_dir }}"
+        libvirt_vm_qcow2_download_timeout: 3600
+        libvirt_vm_name: bootstrap
+        libvirt_vm_os_name: "{{ openshift_libvirt_bootstrap_vm.os_name }}"
+        libvirt_vm_disk_type: qcow2
+        libvirt_vm_download_url: "{{ openshift_libvirt_coreos_qcow2_gz_location }}"
+        libvirt_vm_download_checksum_sha256: "{{ openshift_libvirt_coreos_qcow2_gz_sha256 }}"
+        libvirt_vm_memory: "{{ openshift_libvirt_bootstrap_vm.memory }}"
+        libvirt_vm_vcpus: "{{ openshift_libvirt_bootstrap_vm.vcpus }}"
+        libvirt_vm_ignition_file_path: "{{ openshift_libvirt_bootstrap_ign_path }}"
+        libvirt_vm_cloud_init_enabled: false
+        libvirt_vm_networks:
+          - network: "{{ openshift_libvirt_network_name }}"
+            mac:
+              address: "{{ openshift_libvirt_bootstrap_vm_mac }}"
+
+- name: Provision RHCOS master VMs | openshift_install.openshift_libvirt
+  tags: [setup]
+  block:
+    - name: Provision RHCOS master VM | openshift_install.openshift_libvirt
+      ansible.builtin.include_role:
+        name: anixel.libvirt.libvirt_vm
+      vars:
+        libvirt_vm_image_cache_dir: "{{ openshift_libvirt_image_cache_dir }}"
+        libvirt_vm_images_dir: "{{ openshift_libvirt_images_dir }}"
+        libvirt_vm_qcow2_download_timeout: 3600
+        libvirt_vm_name: "master-{{ item }}"
+        libvirt_vm_os_name: "{{ openshift_libvirt_master_vm.os_name }}"
+        libvirt_vm_disk_type: qcow2
+        libvirt_vm_download_url: "{{ openshift_libvirt_coreos_qcow2_gz_location }}"
+        libvirt_vm_download_checksum_sha256: "{{ openshift_libvirt_coreos_qcow2_gz_sha256 }}"
+        libvirt_vm_memory: "{{ openshift_libvirt_master_vm.memory }}"
+        libvirt_vm_vcpus: "{{ openshift_libvirt_master_vm.vcpus }}"
+        libvirt_vm_import_disk_grow: "{{ openshift_libvirt_master_vm.disk_grow | default('') }}"
+        libvirt_vm_ignition_file_path: "{{ openshift_libvirt_master_ign_path }}"
+        libvirt_vm_cloud_init_enabled: false
+        libvirt_vm_networks:
+          - network: "{{ openshift_libvirt_network_name }}"
+            mac:
+              address: "{{ (openshift_libvirt_master_node_mac_prefix ~ ':%02x') | format(item + 1) }}"
+      loop: "{{ openshift_libvirt_master_node_indices }}"
+      loop_control:
+        label: "master-{{ item }}"
+
+- name: Destroy bootstrap VM | openshift_install.openshift_libvirt
+  tags: [never, destroy]
+  block:
+    - name: Destroy bootstrap VM | openshift_install.openshift_libvirt
+      ansible.builtin.include_role:
+        name: anixel.libvirt.libvirt_vm
+      vars:
+        libvirt_vm_state: absent
+        libvirt_vm_name: bootstrap
+
+- name: Destroy RHCOS master VMs | openshift_install.openshift_libvirt
+  tags: [never, destroy]
+  block:
+    - name: Destroy RHCOS master VM | openshift_install.openshift_libvirt
+      ansible.builtin.include_role:
+        name: anixel.libvirt.libvirt_vm
+      vars:
+        libvirt_vm_state: absent
+        libvirt_vm_name: "master-{{ item }}"
+      loop: "{{ openshift_libvirt_master_node_indices }}"
+      loop_control:
+        label: "master-{{ item }}"

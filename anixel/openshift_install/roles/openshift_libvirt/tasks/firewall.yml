@@ -1,25 +1,131 @@
 # SPDX-License-Identifier: MIT-0
 ---
-- name: Enable source NAT for libvirt lab interface on hypervisor | openshift_install.openshift_libvirt
-  ansible.builtin.include_role:
-    name: anixel.libvirt.firewalld_mgt
-  vars:
-    firewalld_mgmt_type: source_nat
-    firewalld_mgmt_source_nat_interface: "{{ openshift_libvirt_firewall_source_nat_interface }}"
-    firewalld_mgmt_source_nat_from_zone: "{{ openshift_libvirt_firewall_source_nat_from_zone }}"
-    firewalld_mgmt_source_nat_to_zone: "{{ openshift_libvirt_firewall_source_nat_to_zone }}"
-    firewalld_mgmt_source_nat_masquerade_from_zone: true
+- name: Configure OpenShift hypervisor firewalld rules | openshift_install.openshift_libvirt
+  tags: [setup]
+  block:
+    - name: Enable source NAT for libvirt lab interface on hypervisor | openshift_install.openshift_libvirt
+      ansible.builtin.include_role:
+        name: anixel.libvirt.firewalld_mgt
+      vars:
+        firewalld_mgmt_type: source_nat
+        firewalld_mgmt_source_nat_interface: "{{ openshift_libvirt_firewall_source_nat_interface }}"
+        firewalld_mgmt_source_nat_from_zone: "{{ openshift_libvirt_firewall_source_nat_from_zone }}"
+        firewalld_mgmt_source_nat_to_zone: "{{ openshift_libvirt_firewall_source_nat_to_zone }}"
+        firewalld_mgmt_source_nat_masquerade_from_zone: true
 
-- name: DNAT hypervisor TCP to load balancer guest (firewalld public zone) | openshift_install.openshift_libvirt
-  ansible.builtin.include_role:
-    name: anixel.libvirt.firewalld_mgt
-  vars:
-    firewalld_mgmt_type: destination_nat
-    firewalld_mgmt_port: "{{ item }}"
-    firewalld_mgmt_to_addr: "{{ openshift_libvirt_loadbalancer_ip }}"
-  loop:
-    - "80"
-    - "443"
-    - "22623"
-    - "6443"
-  when: openshift_libvirt_loadbalancer_ip | length > 0
+    - name: DNAT hypervisor TCP to load balancer guest (firewalld public zone) | openshift_install.openshift_libvirt
+      ansible.builtin.include_role:
+        name: anixel.libvirt.firewalld_mgt
+      vars:
+        firewalld_mgmt_type: destination_nat
+        firewalld_mgmt_port: "{{ item }}"
+        firewalld_mgmt_to_addr: "{{ openshift_libvirt_loadbalancer_ip }}"
+      loop:
+        - "80"
+        - "443"
+        - "22623"
+        - "6443"
+      when: openshift_libvirt_loadbalancer_ip | length > 0
+
+    - name: Configure LocalLoopbackNAT firewalld policy | openshift_install.openshift_libvirt
+      ansible.builtin.include_role:
+        name: anixel.libvirt.firewalld_mgt
+      vars:
+        firewalld_mgmt_type: policy
+        firewalld_mgmt_policy_name: LocalLoopbackNAT
+        firewalld_mgmt_policy_priority: -1
+        firewalld_mgmt_policy_target: CONTINUE
+        firewalld_mgmt_policy_ingress_zone: HOST
+        firewalld_mgmt_policy_egress_zone: public
+        firewalld_mgmt_policy_rich_rules:
+          - >-
+              rule family="ipv4" destination address="{{ openshift_libvirt_firewall_dnat_public_ip }}"
+              forward-port port="6443" protocol="tcp"
+              to-port="6443" to-addr="{{ openshift_libvirt_loadbalancer_ip }}"
+          - >-
+              rule family="ipv4" destination address="{{ openshift_libvirt_firewall_dnat_public_ip }}"
+              forward-port port="80" protocol="tcp"
+              to-port="80" to-addr="{{ openshift_libvirt_loadbalancer_ip }}"
+          - >-
+              rule family="ipv4" destination address="{{ openshift_libvirt_firewall_dnat_public_ip }}"
+              forward-port port="443" protocol="tcp"
+              to-port="443" to-addr="{{ openshift_libvirt_loadbalancer_ip }}"
+          - >-
+              rule family="ipv4" destination address="{{ openshift_libvirt_firewall_dnat_public_ip }}"
+              forward-port port="22623" protocol="tcp"
+              to-port="22623" to-addr="{{ openshift_libvirt_loadbalancer_ip }}"
+      when: openshift_libvirt_loadbalancer_ip | length > 0
+
+    - name: Configure VMLoopbackNAT firewalld policy | openshift_install.openshift_libvirt
+      ansible.builtin.include_role:
+        name: anixel.libvirt.firewalld_mgt
+      vars:
+        firewalld_mgmt_type: policy
+        firewalld_mgmt_policy_name: VMLoopbackNAT
+        firewalld_mgmt_policy_priority: -1
+        firewalld_mgmt_policy_target: CONTINUE
+        firewalld_mgmt_policy_ingress_zone: trusted
+        firewalld_mgmt_policy_egress_zone: public
+        firewalld_mgmt_policy_rich_rules:
+          - >-
+              rule family="ipv4" destination address="{{ openshift_libvirt_firewall_dnat_public_ip }}"
+              forward-port port="6443" protocol="tcp"
+              to-port="6443" to-addr="{{ openshift_libvirt_loadbalancer_ip }}"
+          - >-
+              rule family="ipv4" destination address="{{ openshift_libvirt_firewall_dnat_public_ip }}"
+              forward-port port="80" protocol="tcp"
+              to-port="80" to-addr="{{ openshift_libvirt_loadbalancer_ip }}"
+          - >-
+              rule family="ipv4" destination address="{{ openshift_libvirt_firewall_dnat_public_ip }}"
+              forward-port port="443" protocol="tcp"
+              to-port="443" to-addr="{{ openshift_libvirt_loadbalancer_ip }}"
+          - >-
+              rule family="ipv4" destination address="{{ openshift_libvirt_firewall_dnat_public_ip }}"
+              forward-port port="22623" protocol="tcp"
+              to-port="22623" to-addr="{{ openshift_libvirt_loadbalancer_ip }}"
+      when: openshift_libvirt_loadbalancer_ip | length > 0
+
+- name: Revert OpenShift hypervisor firewalld rules | openshift_install.openshift_libvirt
+  tags: [never, destroy]
+  block:
+    - name: Delete LocalLoopbackNAT firewalld policy | openshift_install.openshift_libvirt
+      ansible.builtin.include_role:
+        name: anixel.libvirt.firewalld_mgt
+      vars:
+        firewalld_mgmt_mode: absent
+        firewalld_mgmt_type: policy
+        firewalld_mgmt_policy_name: LocalLoopbackNAT
+
+    - name: Delete VMLoopbackNAT firewalld policy | openshift_install.openshift_libvirt
+      ansible.builtin.include_role:
+        name: anixel.libvirt.firewalld_mgt
+      vars:
+        firewalld_mgmt_mode: absent
+        firewalld_mgmt_type: policy
+        firewalld_mgmt_policy_name: VMLoopbackNAT
+
+    - name: Remove hypervisor TCP DNAT to load balancer guest (firewalld public zone) | openshift_install.openshift_libvirt
+      ansible.builtin.include_role:
+        name: anixel.libvirt.firewalld_mgt
+      vars:
+        firewalld_mgmt_mode: absent
+        firewalld_mgmt_type: destination_nat
+        firewalld_mgmt_port: "{{ item }}"
+        firewalld_mgmt_to_addr: "{{ openshift_libvirt_loadbalancer_ip }}"
+      loop:
+        - "80"
+        - "443"
+        - "22623"
+        - "6443"
+      when: openshift_libvirt_loadbalancer_ip | length > 0
+
+    - name: Disable source NAT for libvirt lab interface on hypervisor | openshift_install.openshift_libvirt
+      ansible.builtin.include_role:
+        name: anixel.libvirt.firewalld_mgt
+      vars:
+        firewalld_mgmt_mode: absent
+        firewalld_mgmt_type: source_nat
+        firewalld_mgmt_source_nat_interface: "{{ openshift_libvirt_firewall_source_nat_interface }}"
+        firewalld_mgmt_source_nat_from_zone: "{{ openshift_libvirt_firewall_source_nat_from_zone }}"
+        firewalld_mgmt_source_nat_to_zone: "{{ openshift_libvirt_firewall_source_nat_to_zone }}"
+        firewalld_mgmt_source_nat_masquerade_from_zone: true

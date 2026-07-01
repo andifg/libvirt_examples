@@ -25,6 +25,9 @@ openshift_libvirt_network_ipv6_prefix: "64"
 openshift_libvirt_haproxy_vm_name: haproxy
 openshift_libvirt_haproxy_vm_mac: "52:54:00:ab:cd:21"
 openshift_libvirt_bootstrap_vm_mac: "52:54:00:ab:cd:20"
+# Master VM / DHCP loop indices (master-0 …); MAC suffix is item + 1 (never :00).
+openshift_libvirt_master_node_indices: "{{ range(openshift_libvirt_master_nodes | int) | list }}"
+
 # QEMU/KVM locally administered MAC prefixes for master/worker static DHCP (tasks/network.yml).
 openshift_libvirt_master_node_mac_prefix: "52:54:00:ab:ce"
 openshift_libvirt_worker_node_mac_prefix: "52:54:00:ab:cf"
@@ -36,3 +39,6 @@ openshift_libvirt_haproxy_vm_user: cockpit
 openshift_libvirt_firewall_source_nat_interface: "{{ openshift_libvirt_network_bridge }}"
 openshift_libvirt_firewall_source_nat_from_zone: trusted
 openshift_libvirt_firewall_source_nat_to_zone: public
+
+# Loopback DNAT policies (tasks/firewall.yml): hypervisor public IP -> HAProxy guest.
+openshift_libvirt_firewall_dnat_public_ip: "{{ cloudflare_dns_target_ip | default(ansible_host, true) }}"

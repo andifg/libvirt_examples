@@ -27,3 +27,10 @@ openshift_libvirt_bootstrap_vm:
   memory: 16384
   vcpus: 4
   os_name: rhel9.6
+
+# Control-plane VMs (RHCOS + master.ign; tasks/nodes.yml; libvirt domain names master-0 … master-N).
+openshift_libvirt_master_vm:
+  memory: 16384
+  vcpus: 4
+  os_name: rhel9.6
+  disk_grow: "+30G"

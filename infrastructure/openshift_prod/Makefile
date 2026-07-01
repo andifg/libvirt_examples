@@ -3,6 +3,9 @@ install:
 	ansible-galaxy collection install -r requirements.yml --collections-path ./collections
 
 run:
-	ansible-playbook anixel.openshift_install.run
+	ansible-playbook anixel.openshift_install.run --tags setup
 
-.PHONY: install run
+destroy:
+	ansible-playbook anixel.openshift_install.run --tags destroy
+
+.PHONY: install run destroy
