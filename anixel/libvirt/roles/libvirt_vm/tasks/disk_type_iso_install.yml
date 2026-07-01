@@ -2,11 +2,9 @@
 ---
 # Install-from-ISO: fetch installer ISO → virt_install (see task for fixed disk/console/extra_args).
 
-- name: Require ISO install guest variables | libvirt_vm
+- name: Require ISO install guest variables | libvirt_vm ({{ libvirt_vm_name }})
   ansible.builtin.assert:
     that:
-      - libvirt_vm_name is defined
-      - libvirt_vm_name | length > 0
       - libvirt_vm_os_name is defined
       - libvirt_vm_os_name | length > 0
       - libvirt_vm_download_url is defined
@@ -14,22 +12,22 @@
       - libvirt_vm_networks is defined
       - libvirt_vm_networks | length > 0
     fail_msg: >-
-      Set libvirt_vm_name, libvirt_vm_os_name, libvirt_vm_download_url (installer ISO), and a non-empty libvirt_vm_networks list.
+      Set libvirt_vm_os_name, libvirt_vm_download_url (installer ISO), and a non-empty libvirt_vm_networks list.
 
-- name: Ensure VM disk directory exists | libvirt_vm
+- name: Ensure VM disk directory exists | libvirt_vm ({{ libvirt_vm_name }})
   ansible.builtin.file:
     path: "{{ libvirt_vm_disk_dir }}"
     state: directory
     mode: "0755"
 
-- name: Build cloud-init payload for virt_install | libvirt_vm
+- name: Build cloud-init payload for virt_install | libvirt_vm ({{ libvirt_vm_name }})
   when: libvirt_vm_cloud_init_enabled | bool
   ansible.builtin.set_fact:
     libvirt_vm__cloud_init:
       user_data: "{{ libvirt_vm_cloud_init_user_data | default(libvirt_vm_cloud_init_default) }}"
       disable: "{{ libvirt_vm_cloud_init_disable }}"
 
-- name: Download installer ISO to cache | libvirt_vm
+- name: Download installer ISO to cache | libvirt_vm ({{ libvirt_vm_name }})
   ansible.builtin.get_url:
     url: "{{ libvirt_vm_download_url }}"
     dest: "{{ libvirt_vm_image_cache_dir }}/{{ libvirt_vm_download_url | basename }}"
@@ -37,7 +35,7 @@
     timeout: "{{ libvirt_vm_qcow2_download_timeout }}"
     force: false
 
-- name: Copy installer ISO next to install disk | libvirt_vm
+- name: Copy installer ISO next to install disk | libvirt_vm ({{ libvirt_vm_name }})
   ansible.builtin.copy:
     src: "{{ libvirt_vm_image_cache_dir }}/{{ libvirt_vm_download_url | basename }}"
     dest: "{{ libvirt_vm_iso_installer_path }}"
@@ -45,33 +43,7 @@
     mode: "0644"
     force: false
 
-# - name: Create libvirt domain from installer ISO
-#   community.libvirt.virt_install:
-#     name: "{{ libvirt_vm_name }}"
-#     memory: 4096              # Boost to 4GB to avoid the "Halt" during network setup
-#     vcpus: 2
-#     location: "{{ libvirt_vm_iso_installer_path }}"
-#     disks:
-#       - path: "{{ libvirt_vm_disk_dir }}/vm-{{ libvirt_vm_name }}.qcow2"
-#         size: 20
-#         format: qcow2
-#         bus: virtio
-#       - path: "{{ libvirt_vm_iso_installer_path }}"
-#         format: raw
-#         readonly: yes
-#         bus: usb
-#     extra_args: "inst.text console=ttyS0,115200n8"
-#     graphics: { type: "none" }
-#     console:
-#       type: pty
-#       target_type: serial
-#     install:
-#       os: "{{ libvirt_vm_os_name }}"
-#     networks: "{{ libvirt_vm_networks }}"
-#     # This prevents the VM from disappearing immediately
-#     autostart: yes
-
-- name: Create libvirt domain from installer ISO | libvirt_vm
+- name: Create libvirt domain from installer ISO | libvirt_vm ({{ libvirt_vm_name }})
   community.libvirt.virt_install:
     name: "{{ libvirt_vm_name }}"
     memory: "{{ libvirt_vm_memory }}"

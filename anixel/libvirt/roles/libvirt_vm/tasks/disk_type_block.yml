@@ -2,11 +2,9 @@
 ---
 # Import: cache image → optional bz2 / gzip / raw|img → qcow2 → copy to images/vm-<name>.qcow2 → community.libvirt.virt_install.
 
-- name: Require import guest variables | libvirt_vm
+- name: Require import guest variables | libvirt_vm ({{ libvirt_vm_name }})
   ansible.builtin.assert:
     that:
-      - libvirt_vm_name is defined
-      - libvirt_vm_name | length > 0
       - libvirt_vm_os_name is defined
       - libvirt_vm_os_name | length > 0
       - libvirt_vm_download_url is defined
@@ -14,10 +12,10 @@
       - libvirt_vm_networks is defined
       - libvirt_vm_networks | length > 0
     fail_msg: >-
-      Set libvirt_vm_name, libvirt_vm_os_name, libvirt_vm_download_url,
+      Set libvirt_vm_os_name, libvirt_vm_download_url,
       and a non-empty libvirt_vm_networks list.
 
-- name: Build cloud-init payload for virt_install | libvirt_vm
+- name: Build cloud-init payload for virt_install | libvirt_vm ({{ libvirt_vm_name }})
   when:
     - libvirt_vm_cloud_init_enabled | bool
     - libvirt_vm_ignition_file_path | length == 0
@@ -26,7 +24,7 @@
       user_data: "{{ libvirt_vm_cloud_init_user_data | default(libvirt_vm_cloud_init_default) }}"
       disable: "{{ libvirt_vm_cloud_init_disable }}"
 
-- name: Download OS image to cache | libvirt_vm
+- name: Download OS image to cache | libvirt_vm ({{ libvirt_vm_name }})
   ansible.builtin.get_url:
     url: "{{ libvirt_vm_download_url }}"
     dest: "{{ libvirt_vm_image_cache_dir }}/{{ libvirt_vm_download_url | basename }}"
@@ -35,11 +33,11 @@
     checksum: "{{ 'sha256:' + libvirt_vm_download_checksum_sha256 if libvirt_vm_download_checksum_sha256 | length > 0 else omit }}"
     force: false
 
-- name: Track working file in cache | libvirt_vm
+- name: Track working file in cache | libvirt_vm ({{ libvirt_vm_name }})
   ansible.builtin.set_fact:
     libvirt_vm__ds_work: "{{ libvirt_vm_image_cache_dir }}/{{ libvirt_vm_download_url | basename }}"
 
-- name: Decompress bz2 in cache | libvirt_vm
+- name: Decompress bz2 in cache | libvirt_vm ({{ libvirt_vm_name }})
   when: libvirt_vm__ds_work | regex_search('\.bz2$', ignorecase=True)
   ansible.builtin.command:
     argv:
@@ -49,12 +47,12 @@
       - "{{ libvirt_vm__ds_work }}"
     creates: "{{ libvirt_vm__ds_work | regex_replace('(?i)\\.bz2$', '') }}"
 
-- name: Update path after bz2 | libvirt_vm
+- name: Update path after bz2 | libvirt_vm ({{ libvirt_vm_name }})
   when: libvirt_vm__ds_work | regex_search('\.bz2$', ignorecase=True)
   ansible.builtin.set_fact:
     libvirt_vm__ds_work: "{{ libvirt_vm__ds_work | regex_replace('(?i)\\.bz2$', '') }}"
 
-- name: Decompress gzip in cache | libvirt_vm
+- name: Decompress gzip in cache | libvirt_vm ({{ libvirt_vm_name }})
   when: libvirt_vm__ds_work | regex_search('\.gz$', ignorecase=True)
   ansible.builtin.command:
     argv:
@@ -65,12 +63,12 @@
       - "{{ libvirt_vm__ds_work }}"
     creates: "{{ libvirt_vm__ds_work | regex_replace('(?i)\\.gz$', '') }}"
 
-- name: Update path after gzip | libvirt_vm
+- name: Update path after gzip | libvirt_vm ({{ libvirt_vm_name }})
   when: libvirt_vm__ds_work | regex_search('\.gz$', ignorecase=True)
   ansible.builtin.set_fact:
     libvirt_vm__ds_work: "{{ libvirt_vm__ds_work | regex_replace('(?i)\\.gz$', '') }}"
 
-- name: Convert raw or disk image to qcow2 in cache | libvirt_vm
+- name: Convert raw or disk image to qcow2 in cache | libvirt_vm ({{ libvirt_vm_name }})
   when: >-
     (libvirt_vm_disk_type == 'raw')
     or (
@@ -90,7 +88,7 @@
       - "{{ libvirt_vm_image_cache_dir }}/{{ libvirt_vm__ds_work | basename | regex_replace('(?i)\\.(raw|img)$', '.qcow2') }}"
     creates: "{{ libvirt_vm_image_cache_dir }}/{{ libvirt_vm__ds_work | basename | regex_replace('(?i)\\.(raw|img)$', '.qcow2') }}"
 
-- name: Update path after raw or img to qcow2 | libvirt_vm
+- name: Update path after raw or img to qcow2 | libvirt_vm ({{ libvirt_vm_name }})
   when: >-
     (libvirt_vm_disk_type == 'raw')
     or (
@@ -101,7 +99,7 @@
   ansible.builtin.set_fact:
     libvirt_vm__ds_work: "{{ libvirt_vm_image_cache_dir }}/{{ libvirt_vm__ds_work | basename | regex_replace('(?i)\\.(raw|img)$', '.qcow2') }}"
 
-- name: Copy cached qcow2 to per-VM image path | libvirt_vm
+- name: Copy cached qcow2 to per-VM image path | libvirt_vm ({{ libvirt_vm_name }})
   ansible.builtin.copy:
     src: "{{ libvirt_vm__ds_work }}"
     dest: "{{ libvirt_vm_images_dir }}/vm-{{ libvirt_vm_name }}.qcow2"
@@ -109,7 +107,7 @@
     mode: "0644"
     force: false
 
-- name: Grow imported qcow2 before domain create | libvirt_vm
+- name: Grow imported qcow2 before domain create | libvirt_vm ({{ libvirt_vm_name }})
   when: libvirt_vm_import_disk_grow | string | trim | length > 0
   ansible.builtin.command:
     argv:
@@ -120,17 +118,17 @@
   register: libvirt_vm__import_disk_grow
   changed_when: libvirt_vm__import_disk_grow.rc == 0
 
-- name: Stage CoreOS ignition for libvirt fw_cfg | libvirt_vm
+- name: Stage CoreOS ignition for libvirt fw_cfg | libvirt_vm ({{ libvirt_vm_name }})
   when: libvirt_vm_ignition_file_path | length > 0
   block:
-    - name: Copy ignition into libvirt images dir | libvirt_vm
+    - name: Copy ignition into libvirt images dir | libvirt_vm ({{ libvirt_vm_name }})
       ansible.builtin.copy:
         src: "{{ libvirt_vm_ignition_file_path }}"
         dest: "{{ libvirt_vm_images_dir }}/vm-{{ libvirt_vm_name }}.ign"
         mode: "0644"
         remote_src: true
 
-    - name: Set sysinfo fw_cfg for CoreOS ignition | libvirt_vm
+    - name: Set sysinfo fw_cfg for CoreOS ignition | libvirt_vm ({{ libvirt_vm_name }})
       ansible.builtin.set_fact:
         libvirt_vm__sysinfo_fwcfg:
           type: fwcfg
@@ -141,7 +139,7 @@
 # qemu_commandline does not work here: community.libvirt.virt_install passes
 # --qemu-commandline and -fw_cfg as separate argv tokens, so virt-install errors
 # with "expected one argument". Use sysinfo fwcfg instead (same ignition path).
-- name: Create libvirt domain from imported disks | libvirt_vm
+- name: Create libvirt domain from imported disks | libvirt_vm ({{ libvirt_vm_name }})
   community.libvirt.virt_install:
     name: "{{ libvirt_vm_name }}"
     memory: "{{ libvirt_vm_memory }}"

@@ -2,20 +2,13 @@
 ---
 # Undefine one libvirt domain, delete attached volume files, and remove staged ignition (image cache untouched).
 
-- name: Require libvirt_vm_name | libvirt_vm
-  ansible.builtin.assert:
-    that:
-      - libvirt_vm_name is defined
-      - libvirt_vm_name | string | length > 0
-    fail_msg: Set libvirt_vm_name.
-
-- name: Force-off libvirt domain | libvirt_vm
+- name: Force-off libvirt domain | libvirt_vm ({{ libvirt_vm_name }})
   community.libvirt.virt:
     name: "{{ libvirt_vm_name }}"
     state: destroyed
   failed_when: false
 
-- name: Undefine libvirt domain and delete attached volume files | libvirt_vm
+- name: Undefine libvirt domain and delete attached volume files | libvirt_vm ({{ libvirt_vm_name }})
   community.libvirt.virt:
     command: undefine
     name: "{{ libvirt_vm_name }}"
@@ -27,7 +20,7 @@
       - delete_volumes
   failed_when: false
 
-- name: Remove staged CoreOS ignition file | libvirt_vm
+- name: Remove staged CoreOS ignition file | libvirt_vm ({{ libvirt_vm_name }})
   ansible.builtin.file:
     path: "{{ libvirt_vm_images_dir }}/vm-{{ libvirt_vm_name }}.ign"
     state: absent
