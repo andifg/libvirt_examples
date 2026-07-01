@@ -19,3 +19,7 @@
 - name: nodes | openshift_install.openshift_libvirt
   ansible.builtin.include_tasks: nodes.yml
   tags: [setup, destroy]
+
+- name: nodes bootstrap destroy | openshift_install.openshift_libvirt
+  ansible.builtin.include_tasks: nodes.yml
+  tags: [never, destroy_bootstrap]

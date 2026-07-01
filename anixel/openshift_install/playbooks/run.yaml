@@ -26,3 +26,18 @@
         openshift_libvirt_master_ign_path: "{{ openshift_configs_master_ign_path }}"
         openshift_libvirt_worker_ign_path: "{{ openshift_configs_worker_ign_path }}"
       tags: [setup, destroy]
+
+    - ansible.builtin.include_role:
+        name: openshift_configs
+        tasks_from: wait_for_bootstrap_complete.yml
+      tags: [setup]
+
+    - ansible.builtin.include_role:
+        name: openshift_libvirt
+      tags: [destroy_bootstrap]
+
+    - ansible.builtin.include_role:
+        name: openshift_configs
+        tasks_from: wait_for_installation.yml
+      tags: [destroy_bootstrap]
+

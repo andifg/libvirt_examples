@@ -52,6 +52,16 @@
       loop_control:
         label: "master-{{ item }}"
 
+- name: Destroy bootstrap VM after bootstrap-complete | openshift_install.openshift_libvirt
+  tags: [never, destroy_bootstrap]
+  block:
+    - name: Destroy bootstrap VM | openshift_install.openshift_libvirt
+      ansible.builtin.include_role:
+        name: anixel.libvirt.libvirt_vm
+      vars:
+        libvirt_vm_state: absent
+        libvirt_vm_name: bootstrap
+
 - name: Destroy bootstrap VM | openshift_install.openshift_libvirt
   tags: [never, destroy]
   block:

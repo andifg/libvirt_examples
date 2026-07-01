@@ -1,14 +1,15 @@
 # SPDX-License-Identifier: MIT-0
 ---
 # Import after control-plane nodes are up (UPI). Blocks until install-complete.
-#
-# Example:
-#   - ansible.builtin.include_role:
-#       name: openshift_configs
-#       tasks_from: wait_for_installation.yml
 
 - name: asserts | openshift_install.openshift_configs
   ansible.builtin.include_tasks: asserts.yml
+
+- name: Show openshift-install log path | openshift_install.openshift_configs
+  ansible.builtin.debug:
+    msg: >-
+      Waiting for install-complete (timeout {{ openshift_configs_wait_for_install_timeout }}s).
+      Install log: {{ openshift_configs_workdir }}/.openshift_install.log
 
 - name: Wait for OpenShift install-complete via openshift-install
   ansible.builtin.command:
@@ -31,7 +32,8 @@
       }}
   register: openshift_configs_wait_for_result
   changed_when: false
+  timeout: "{{ openshift_configs_wait_for_install_timeout | int }}"
 
-- name: Show openshift-install wait-for result
+- name: Show openshift-install install-complete result
   ansible.builtin.debug:
     msg: "{{ openshift_configs_wait_for_result.stdout_lines | default([]) }}"

@@ -1,0 +1,37 @@
+# SPDX-License-Identifier: MIT-0
+---
+- name: asserts | openshift_install.openshift_configs
+  ansible.builtin.include_tasks: asserts.yml
+
+- name: Show openshift-install log path | openshift_install.openshift_configs
+  ansible.builtin.debug:
+    msg: >-
+      Waiting for bootstrap-complete (timeout {{ openshift_configs_wait_for_bootstrap_timeout }}s).
+      Install log: {{ openshift_configs_workdir }}/.openshift_install.log
+
+- name: Wait for OpenShift bootstrap-complete via openshift-install
+  ansible.builtin.command:
+    argv: "{{ _openshift_install_bootstrap_wait_argv }}"
+  vars:
+    _openshift_install_bootstrap_wait_argv: >-
+      {{
+        [
+          openshift_configs_install_binary_path,
+          'wait-for',
+          'bootstrap-complete',
+          '--dir',
+          openshift_configs_workdir,
+        ]
+        + (
+          ['--log-level', openshift_configs_wait_for_bootstrap_log_level]
+          if openshift_configs_wait_for_bootstrap_log_level | length > 0
+          else []
+        )
+      }}
+  register: openshift_configs_bootstrap_wait_result
+  changed_when: false
+  timeout: "{{ openshift_configs_wait_for_bootstrap_timeout | int }}"
+
+- name: Show openshift-install bootstrap-complete result
+  ansible.builtin.debug:
+    msg: "{{ openshift_configs_bootstrap_wait_result.stdout_lines | default([]) }}"
