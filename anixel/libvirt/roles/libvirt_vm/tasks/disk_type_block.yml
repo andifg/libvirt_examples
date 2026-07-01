@@ -109,6 +109,17 @@
     mode: "0644"
     force: false
 
+- name: Grow imported qcow2 before domain create | libvirt_vm
+  when: libvirt_vm_import_disk_grow | string | trim | length > 0
+  ansible.builtin.command:
+    argv:
+      - qemu-img
+      - resize
+      - "{{ libvirt_vm_images_dir }}/vm-{{ libvirt_vm_name }}.qcow2"
+      - "{{ libvirt_vm_import_disk_grow | string | trim }}"
+  register: libvirt_vm__import_disk_grow
+  changed_when: libvirt_vm__import_disk_grow.rc == 0
+
 - name: Stage CoreOS ignition for libvirt fw_cfg | libvirt_vm
   when: libvirt_vm_ignition_file_path | length > 0
   block:

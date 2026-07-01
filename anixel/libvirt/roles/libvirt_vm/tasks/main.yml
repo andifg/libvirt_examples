@@ -8,7 +8,18 @@
     fail_msg: >-
       This role targets Red Hat family systems only (ansible_os_family: {{ ansible_os_family }}).
 
-- name: Require libvirt_vm_disk_type
+- name: Require supported libvirt_vm_state | libvirt_vm
+  ansible.builtin.assert:
+    that:
+      - libvirt_vm_state in ['present', 'absent']
+    fail_msg: Set libvirt_vm_state to present or absent.
+
+- name: Destroy libvirt VM | libvirt_vm
+  ansible.builtin.include_tasks: absent.yml
+  when: libvirt_vm_state == 'absent'
+
+- name: Require libvirt_vm_disk_type | libvirt_vm
+  when: libvirt_vm_state == 'present'
   ansible.builtin.assert:
     that:
       - libvirt_vm_disk_type is defined
@@ -18,9 +29,13 @@
       Set libvirt_vm_disk_type to qcow2, raw, img, or iso.
 
 - name: Import disk pipeline qcow2, raw, or img | libvirt_vm
-  when: libvirt_vm_disk_type in ['qcow2', 'raw', 'img']
+  when:
+    - libvirt_vm_state == 'present'
+    - libvirt_vm_disk_type in ['qcow2', 'raw', 'img']
   ansible.builtin.include_tasks: disk_type_block.yml
 
 - name: ISO install disk pipeline | libvirt_vm
-  when: libvirt_vm_disk_type == 'iso'
+  when:
+    - libvirt_vm_state == 'present'
+    - libvirt_vm_disk_type == 'iso'
   ansible.builtin.include_tasks: disk_type_iso_install.yml

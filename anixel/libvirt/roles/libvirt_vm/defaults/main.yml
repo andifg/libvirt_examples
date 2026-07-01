@@ -1,12 +1,18 @@
 # SPDX-License-Identifier: MIT-0
 ---
-# Required: libvirt_vm_name, libvirt_vm_os_name, libvirt_vm_disk_type (qcow2 | raw | img | iso),
+# present -> disk_type_block.yml or disk_type_iso_install.yml
+# absent -> tasks/absent.yml (undefine domain and delete volumes)
+
+libvirt_vm_state: present
+
+# Required (present): libvirt_vm_name, libvirt_vm_os_name, libvirt_vm_disk_type (qcow2 | raw | img | iso),
 #           and a non-empty libvirt_vm_download_url (OS image or installer ISO per disk_type).
 # Optional: libvirt_vm_memory, libvirt_vm_vcpus, libvirt_vm_graphics_type, libvirt_vm_serial_console_enabled,
 #           libvirt_vm_iso_install_disk_size_gib, libvirt_vm_iso_install_extra_args, libvirt_vm_iso_install_console,
 #           libvirt_vm_autostart,
 #           libvirt_vm_networks (non-empty list; each item is passed as-is to community.libvirt.virt_install networks — see examples below),
 #           libvirt_vm_cloud_init_enabled, libvirt_vm_cloud_init_user_data, libvirt_vm_cloud_init_disable,
+#           libvirt_vm_import_disk_grow (import: qemu-img resize after copy),
 #           libvirt_vm_disk_dir (iso mode), libvirt_vm_image_cache_dir, libvirt_vm_images_dir.
 
 libvirt_vm_disk_type: qcow2
@@ -27,6 +33,11 @@ libvirt_vm_image_cache_dir: /var/lib/libvirt/image-cache
 libvirt_vm_images_dir: /var/lib/libvirt/images
 libvirt_vm_disk_dir: "{{ libvirt_vm_images_dir }}/vm-{{ libvirt_vm_name }}"
 libvirt_vm_qcow2_download_timeout: 3600
+
+# Import (disk_type_block.yml): qemu-img resize SIZE after copy to vm-<name>.qcow2.
+# Empty = keep image size. Examples: "+50G" (add), "120G" (absolute virtual size).
+# RHCOS/FCOS grow root on first boot when the block device is larger than the image.
+libvirt_vm_import_disk_grow: ""
 
 # libvirt_vm_networks — list of NIC dicts for virt_install (module community.libvirt.virt_install, parameter networks).
 # Examples (copy into your playbook vars; keep [] here unless this role file is your inventory):

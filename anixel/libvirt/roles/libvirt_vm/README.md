@@ -12,7 +12,7 @@ Provisions **one** libvirt guest using flat **`libvirt_vm_*`** variables. **`tas
 
 | Value | Meaning |
 |-------|---------|
-| **`qcow2`** or **`raw`** | **Import**: **`get_url`** → cache → optional **bunzip2** → optional **raw/img → qcow2** (when URL yields **`.raw`/`.img`**) → copy to **`{{ libvirt_vm_images_dir }}/vm-{{ libvirt_vm_name }}.qcow2`**, then **`virt_install`** (**`import: true`**, **`qcow2`**). |
+| **`qcow2`** or **`raw`** | **Import**: **`get_url`** → cache → optional **bunzip2** → optional **raw/img → qcow2** (when URL yields **`.raw`/`.img`**) → copy to **`{{ libvirt_vm_images_dir }}/vm-{{ libvirt_vm_name }}.qcow2`**, optional **`qemu-img resize`**, then **`virt_install`** (**`import: true`**, **`qcow2`**). |
 | **`img`** | Same **`disk_type_block.yml`** pipeline as **`qcow2`**, but **`img`** forces conversion to **`qcow2`** whenever the cached artifact is not already **`.qcow2`** (use for OPNsense **nano** **`.img`** / **`.img.bz2`**). |
 | **`iso`** | **Install from ISO**: fetch installer ISO to **`libvirt_vm_iso_installer_path`**, then **`virt_install`** (**`libvirt_vm_iso_install_disk_size_gib`**, **`libvirt_vm_iso_install_extra_args`**, **`libvirt_vm_iso_install_console`** — see **`defaults/main.yml`** and **`disk_type_iso_install.yml`**). |
 
@@ -21,11 +21,13 @@ Provisions **one** libvirt guest using flat **`libvirt_vm_*`** variables. **`tas
 | Variable | Required | Default / notes |
 |----------|----------|-----------------|
 | **`libvirt_vm_name`** | yes | Libvirt domain name |
+| **`libvirt_vm_state`** | no | **`present`** (default) or **`absent`** — **`absent`** undefines the domain, deletes attached volumes, and removes **`vm-{{ libvirt_vm_name }}.ign`** if staged for CoreOS ignition. |
 | **`libvirt_vm_os_name`** | yes | **`virt_install`** **`osinfo`** name |
 | **`libvirt_vm_disk_type`** | no | **`qcow2`**, **`raw`**, **`img`**, or **`iso`** |
 | **`libvirt_vm_download_url`** | yes (per pipeline file) | Image or installer ISO URL (**`get_url`**) |
 | **`libvirt_vm_image_cache_dir`** | no | **`/var/lib/libvirt/image-cache`** — download and staging cache (import + ISO) |
 | **`libvirt_vm_images_dir`** | no | **`/var/lib/libvirt/images`** — import disk is **`vm-{{ libvirt_vm_name }}.qcow2`** here |
+| **`libvirt_vm_import_disk_grow`** | no | **Import** only: passed to **`qemu-img resize`** after copy (e.g. **`"+50G"`** or **`"120G"`**); default **`""`** (no grow). RHCOS/FCOS expand root on first boot. |
 | **`libvirt_vm_disk_dir`** | no | **`{{ libvirt_vm_images_dir }}/vm-{{ libvirt_vm_name }}`** — used for **ISO** install artifacts only |
 | **`libvirt_vm_iso_filename`**, **`libvirt_vm_iso_installer_path`** | no | ISO install: installer basename and full path (default **`{{ libvirt_vm_disk_dir }}/{{ libvirt_vm_iso_filename }}`**) |
 | **`libvirt_vm_iso_install_disk_size_gib`** | no | **ISO** install: new disk size in GiB (**virt_install** **`disks`**); default **20**. |
